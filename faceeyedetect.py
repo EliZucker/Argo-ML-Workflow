@@ -12,7 +12,7 @@ cropCommands = []
 
 face_cascade = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
 eye_cascade = cv.CascadeClassifier('haarcascade_eye.xml')
-img = cv.imread('group-people-wearing-sunglasses-29654821.jpg')
+img = cv.imread('input_image.jpg')
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -29,9 +29,8 @@ for i in range(len(faces)):
 
 #create list of imagemagick commands to crop each face
 for i in faceValues:
-    command = 'convert group-people-wearing-sunglasses-29654821.jpg -crop ' + str(faceValues[2][2])+'x'+str(faceValues[2][3])+'+'+str(faceValues[2][0])+'+'+str(faceValues[2][1])+" output.jpg"
+    command = 'convert input_image.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" cropped_face.jpg"
     cropCommands.append(command)
-
 
 #dump imagemagick commands
 json.dump([i for i in cropCommands], sys.stdout)
