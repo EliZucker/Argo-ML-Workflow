@@ -1,11 +1,14 @@
 import numpy as np
 import cv2 as cv
+import json
+import sys
 
-#calibrates face box enlargement after detection
+#calibrate face box enlargement after detection
 TOP_SCALER = 0.56
 SIDES_SCALER = 0.28
 
-output = []
+faceValues = []
+cropCommands = [] 
 
 face_cascade = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
 eye_cascade = cv.CascadeClassifier('haarcascade_eye.xml')
@@ -21,23 +24,17 @@ for i in range(len(faces)):
     w = faces[i, 2]
     h = faces[i, 3]
 
-    #draw rectangle around face
-    cv.rectangle(img,(x-int(w*SIDES_SCALER), y-int(h*TOP_SCALER)),(x+w+int(w*SIDES_SCALER),y+h+int(h*SIDES_SCALER)),(255,0,0),2)
+    #add face x, y, width, and height to faceValues
+    faceValues.append([x-int(w*SIDES_SCALER), y-int(h*TOP_SCALER), w+2*int(w*SIDES_SCALER), h+int(h*SIDES_SCALER)+int(h*TOP_SCALER)])
 
-    #add face x, y, width, and height to output
-    output.append([x-int(w*SIDES_SCALER), y-int(h*TOP_SCALER), w+2*int(w*SIDES_SCALER), h+int(h*SIDES_SCALER)+int(h*TOP_SCALER)])
+#create list of imagemagick commands to crop each face
+for i in faceValues:
+    command = 'convert group-people-wearing-sunglasses-29654821.jpg -crop ' + str(faceValues[2][2])+'x'+str(faceValues[2][3])+'+'+str(faceValues[2][0])+'+'+str(faceValues[2][1])+" output.jpg"
+    cropCommands.append(command)
 
-print 'convert group-people-wearing-sunglasses-29654821.jpg -crop ' 
-print output[2][2]
-print 'x'
-print output[2][3]
-print '+'
-print output[2][0]
-print '+'
-print output[2][1]
 
-cv.imshow('img',img)
-cv.waitKey(0)
-cv.destroyAllWindows()
+#dump imagemagick commands
+json.dump([i for i in cropCommands], sys.stdout)
+
 
 
