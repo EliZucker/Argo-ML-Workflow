@@ -12,7 +12,7 @@ cropCommands = []
 
 face_cascade = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
 eye_cascade = cv.CascadeClassifier('haarcascade_eye.xml')
-img = cv.imread('input_image.jpg')
+img = cv.imread('rawimage.jpg')
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 faces = face_cascade.detectMultiScale(gray, 1.3, 5)

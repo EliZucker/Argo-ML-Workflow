@@ -9,7 +9,7 @@ spec:
     inputs:
       parameters:
       - name: IMAGE
-        default: "https://upload.wikimedia.org/wikipedia/commons/1/15/Latin_D.png"
+        default: "https://i.imgur.com/QUS0pCI.jpg"
     dag:
       tasks:
       - name: DOWNLOAD
@@ -18,17 +18,28 @@ spec:
           parameters:
           - name: IMAGE-URL
             value: "{{inputs.parameters.IMAGE}}"
-      - name: IMAGE-SPLIT
+      # - name: IMAGE-SPLIT
+      #   dependencies: [DOWNLOAD]
+      #   template: image-split
+      #   arguments:
+      #     artifacts:
+      #     - name: UNSPLITIMAGE
+      #       from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+      - name: LOCATE-FACES
         dependencies: [DOWNLOAD]
-        template: image-split
+        template: locate-faces
         arguments:
           artifacts:
-          - name: UNSPLITIMAGE
+          - name: RAW-IMAGE
             from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
-      - name: JSON-COMPACT
-        dependencies: [IMAGE-SPLIT]
-        template: json-compact
+      - name: CROP-FACES
+        dependencies: [LOCATE-FACES]
+        template: crop-faces
         arguments:
+          artifacts:
+          - name: RAW-IMAGE
+            from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+          #parameters need to be updated to take imagemagick command
           parameters:
           - name: numofimages
             value: "{{tasks.IMAGE-SPLIT.outputs.parameters.TOTALNUM}}"
@@ -38,7 +49,7 @@ spec:
         arguments:
           parameters:
           - name: randval
-            value: "{{tasks.JSON-COMPACT.outputs.result}}"
+            value: "{{tasks.crop-faces.outputs.result}}"
       - name: LOOPED-3D
         dependencies: [LOOPED-RETRIEVAL]
         template: looped3D
@@ -53,11 +64,11 @@ spec:
     container:
       image: sequenceiq/alpine-curl
       command: ["sh", "-c"]
-      args: ["curl {{inputs.parameters.IMAGE-URL}} > /tmp/image.png"]
+      args: ["curl {{inputs.parameters.IMAGE-URL}} > /tmp/rawimage.jpg"]
     outputs:
       artifacts:
-      - name: IMAGE
-        path: /tmp/image.png
+      - name: RAW-IMAGE
+        path: /tmp/rawimage.jpg
   - name: image-split
     inputs:
       artifacts:
@@ -72,10 +83,23 @@ spec:
       - name: TOTALNUM
         valueFrom:
           path: /tmp/hello.txt
-  - name: json-compact
+  - name: locate-faces
     inputs:
-      parameters:
-      - name: numofimages
+      artifacts:
+      - name: RAW-IMAGE
+        path: /rawimage.jpg
+    script:
+      image: python:alpine3.6
+      command: [python]
+      source: |
+            import json
+            import sys
+            json.dump([3,4,5,4,3,3,7,8,9], sys.stdout)
+  - name: crop-faces
+    inputs:
+      artifacts:
+      - name: downloaded-image
+        path: /rawimage.jpg
     script:
       image: python:alpine3.6
       command: [python]
