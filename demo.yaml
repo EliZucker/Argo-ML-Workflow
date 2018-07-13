@@ -10,6 +10,10 @@ spec:
       parameters:
       - name: IMAGE
         default: "https://i.imgur.com/QUS0pCI.jpg"
+      artifacts:
+      - name: CODE
+        git: 
+          repo: https://github.com/EliZucker/Argo-Workflow-Test.git
     dag:
       tasks:
       - name: DOWNLOAD
@@ -18,13 +22,6 @@ spec:
           parameters:
           - name: IMAGE-URL
             value: "{{inputs.parameters.IMAGE}}"
-      # - name: IMAGE-SPLIT
-      #   dependencies: [DOWNLOAD]
-      #   template: image-split
-      #   arguments:
-      #     artifacts:
-      #     - name: UNSPLITIMAGE
-      #       from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
       - name: LOCATE-FACES
         dependencies: [DOWNLOAD]
         template: locate-faces
@@ -32,6 +29,9 @@ spec:
           artifacts:
           - name: RAW-IMAGE
             from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+          - name: "CODE"
+            from: "{{inputs.artifacts.CODE}}"
+
       - name: CROP-FACES
         dependencies: [LOCATE-FACES]
         template: crop-faces
@@ -41,21 +41,9 @@ spec:
             from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
           #parameters need to be updated to take imagemagick command
           parameters:
-          - name: numofimages
-            value: "{{tasks.IMAGE-SPLIT.outputs.parameters.TOTALNUM}}"
-      - name: LOOPED-RETRIEVAL
-        dependencies: [JSON-COMPACT]
-        template: looped-retrieval
-        arguments:
-          parameters:
-          - name: randval
-            value: "{{tasks.crop-faces.outputs.result}}"
-      - name: LOOPED-3D
-        dependencies: [LOOPED-RETRIEVAL]
-        template: looped3D
-      - name: OUTPUT
-        dependencies: [LOOPED-RETRIEVAL]
-        template: output
+          - name: imagemagick-command
+            value: "{{item}}"
+        withParam: "{{tasks.LOCATE-FACES.outputs.parameters.imagemagick-commands-file}}" 
 
   - name: download-image
     inputs:
@@ -67,112 +55,61 @@ spec:
       args: ["curl {{inputs.parameters.IMAGE-URL}} > /tmp/rawimage.jpg"]
     outputs:
       artifacts:
-      - name: RAW-IMAGE
+      - name: IMAGE
         path: /tmp/rawimage.jpg
-  - name: image-split
-    inputs:
-      artifacts:
-      - name: UNSPLITIMAGE
-        path: /image.jpg
-    container:
-      image: alpine
-      command: ["sh", "-c"]
-      args: ["echo -n doing some image split > /tmp/hello.txt"]
-    outputs:
-      parameters:
-      - name: TOTALNUM
-        valueFrom:
-          path: /tmp/hello.txt
   - name: locate-faces
     inputs:
       artifacts:
-      - name: RAW-IMAGE
+      - name: downloaded-image
         path: /rawimage.jpg
-    script:
+      - name: CODE
+        path: /src
+    container:
       image: python:alpine3.6
-      command: [python]
-      source: |
-            import json
-            import sys
-            json.dump([3,4,5,4,3,3,7,8,9], sys.stdout)
+      command: ["bash", "-c"]
+      args: [python /src/faceeyedetect.py]
+    outputs:
+      parameters:
+      - name: imagemagick-commands-file
+        valueFrom:
+          path: /imagemagick_commands.txt
+
   - name: crop-faces
     inputs:
+      parameters:
+        name: imagemagick-command
+      artifacts:
+      - name: downloaded-image
+        path: /rawimage.jpg
+    steps:
+    - - name: CROP-FACE
+        template: crop-face
+        arguments:
+          artifacts:
+          #Will this line actually work to send the image as an argument?
+          - name: RAW-IMAGE
+            from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+          parameters:
+          - name: imagemagick-command
+            value: "{{item}}"
+        withParam: "{{inputs.parameters.imagemagick-command}}"
+
+  - name: crop-face
+    inputs:
+      parameters:
+      - name: imagemagick-command
       artifacts:
       - name: downloaded-image
         path: /rawimage.jpg
     script:
       image: python:alpine3.6
-      command: [python]
-      source: |
-            import json
-            import sys
-            json.dump([3,4,5,4,3,3,7,8,9], sys.stdout)
-  - name: looped-retrieval
-    inputs:
-      parameters:
-      - name: randval
-    steps:
-    - - name: PARAMPASSING
-        template: parampassing
-        arguments:
-          parameters:
-          - name: iterator
-            value: "{{item}}"
-        withParam: "{{inputs.parameters.randval}}"
-    #OMIT - - name: SIDEIMAGE
-    #     template: sideimage
-    #     when: "{{steps.PARAMPASSING.outputs.parameters.passediterator}} == 3"
-
-  - name: looped3D
-    container:
-      image: alpine
-      command: ["sh", "-c"]
-      args: ["echo looped3D"]
-  - name: output
-    container:
-      image: alpine
-      command: ["sh", "-c"]
-      args: ["echo output"]
-
-  - name: parampassing
-    inputs:
-      parameters:
-      - name: iterator
-    steps:
-    - - name: RECEIVER
-        template: receiver
-        arguments:
-          parameters:
-          - name: iterator
-            value: "{{inputs.parameters.iterator}}"
-    - - name: SIDEIMAGE
-        template: sideimage
-        arguments:
-          parameters:
-          - name: face
-            value: "{{steps.RECEIVER.outputs.parameters.passediterator}}"
-        when: "{{steps.RECEIVER.outputs.parameters.passediterator}} == 3"
-  - name: receiver
-    inputs: 
-      parameters:
-      - name: iterator
-    container:
-      image: alpine:latest
-      command: ["sh", "-c"]
-      args: ["echo -n {{inputs.parameters.iterator}} > /tmp/hello.txt"]
+      command: ["bash", "-c"]
+      args: ["{{inputs.parameters.imagemagick-command}}"]
     outputs:
-      parameters:
-      - name: passediterator
-        valueFrom:
-          path: /tmp/hello.txt 
-  - name: sideimage
-    inputs:
-      parameters:
-      - name: face
-    container:
-      image: alpine
-      command: ["sh", "-c"]
-      args: ["echo sideimage"]
+      artifacts:
+      - name: CROPPED-FACE
+        path: /tmp/cropped_face.jpg
+   
 
 
 

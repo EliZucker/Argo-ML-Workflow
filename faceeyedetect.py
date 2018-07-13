@@ -3,6 +3,7 @@ import cv2 as cv
 import json
 import sys
 
+
 #calibrate face box enlargement after detection
 TOP_SCALER = 0.56
 SIDES_SCALER = 0.28
@@ -29,11 +30,16 @@ for i in range(len(faces)):
 
 #create list of imagemagick commands to crop each face
 for i in faceValues:
-    command = 'convert input_image.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" cropped_face.jpg"
+    command = 'convert rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" cropped_face.jpg"
     cropCommands.append(command)
 
-#dump imagemagick commands
-json.dump([i for i in cropCommands], sys.stdout)
+# print imagemagick commands to file
+orig_stdout = sys.stdout
+f = open('imagemagick_commands.txt', 'w')
+sys.stdout = f
+for i in cropCommands:
+   print i 
+
 
 
 
