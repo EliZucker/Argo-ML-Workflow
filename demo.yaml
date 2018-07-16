@@ -92,6 +92,16 @@ spec:
           - name: imagemagick-command
             value: "{{item}}"
         withParam: "{{inputs.parameters.imagemagick-commands}}"
+    - - name: ISFACE
+        template: isKnownFace
+        arguments:
+          artifacts:
+            - name: cropImage
+              from: "{{steps.RAW-IMAGE.outputs.artifacts.CROPPED-FACE}}"
+    - - name: CONDITION
+        template: condition
+        when: "{{steps.ISFACE.outputs.result}}"
+
 
   - name: crop-face
     inputs:
@@ -109,9 +119,19 @@ spec:
       - name: CROPPED-FACE
         path: /tmp/cropped_face.jpg
    
+  - name: isKnownFace
+    inputs:
+      artifacts:
+      - name: cropImage
+        path: /tmp/image.jpg
+    container:
+      image: python:2.7.15-alpine3.7
+      command: ["bash", "-c"]
+      args: [python /src/faceeyedetect.py]
 
-
-
+  - name: condition
+    container:
+      image: nginx
 
 
   
