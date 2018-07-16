@@ -81,21 +81,18 @@ spec:
       artifacts:
       - name: RAW-IMAGE
     steps:
-    - - name: CROP-FACE
-        template: miniDag
+    - - name: HANDLE-INDIVIDUAL-FACE
+        template: secondary-dag
         arguments:
           artifacts:
-          #Will this line actually work to send the image as an argument?
           - name: RAW-IMAGE
             from: "{{inputs.artifacts.RAW-IMAGE}}"
           parameters:
           - name: imagemagick-command
             value: "{{item}}"
         withParam: "{{inputs.parameters.imagemagick-commands}}"
-    
 
-
-  - name: miniDag
+  - name: secondary-dag
     inputs:
       artifacts:
       - name: RAW-IMAGE
@@ -103,8 +100,8 @@ spec:
       - name: imagemagick-command
     dag:
       tasks:
-      - name: crop-faces
-        template: facecroper
+      - name: CROP-FACE
+        template: crop-face
         arguments:
           artifacts:
           - name: RAW-IMAGE
@@ -114,17 +111,17 @@ spec:
             value: "{{inputs.parameters.imagemagick-command}}"
       - name: ISFACE
         template: isKnownFace
-        dependencies: [crop-faces]
+        dependencies: [CROP-FACE]
         arguments:
           artifacts:
             - name: cropImage
-              from: "{{inputs.artifacts.RAW-IMAGE}}"
+              from: "{{tasks.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
       - name: CONDITION
         template: condition
         dependencies: [ISFACE]
         when: "{{tasks.ISFACE.outputs.result}}"
 
-  - name: facecroper
+  - name: crop-face
     inputs:
       artifacts:
       - name: RAW-IMAGE
