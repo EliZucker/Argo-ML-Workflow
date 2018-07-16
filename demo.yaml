@@ -40,6 +40,8 @@ spec:
           artifacts:
           - name: RAW-IMAGE
             from: "{{tasks.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
+          - name: CODE
+            from: "{{inputs.artifacts.CODE}}"
           parameters:
           - name: imagemagick-commands
             value: "{{tasks.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
@@ -80,6 +82,7 @@ spec:
       - name: imagemagick-commands
       artifacts:
       - name: RAW-IMAGE
+      - name: CODE
     steps:
     - - name: CROP-FACE
         template: miniDag
@@ -88,6 +91,8 @@ spec:
           #Will this line actually work to send the image as an argument?
           - name: RAW-IMAGE
             from: "{{inputs.artifacts.RAW-IMAGE}}"
+          - name: CODE
+            from: "{{inputs.artifacts.CODE}}"
           parameters:
           - name: imagemagick-command
             value: "{{item}}"
@@ -99,6 +104,7 @@ spec:
     inputs:
       artifacts:
       - name: RAW-IMAGE
+      - name: CODE
       parameters:
       - name: imagemagick-command
     dag:
@@ -119,6 +125,8 @@ spec:
           artifacts:
             - name: cropImage
               from: "{{inputs.artifacts.RAW-IMAGE}}"
+            - name: CODE
+              from: "{{inputs.artifacts.CODE}}"
       - name: CONDITION
         template: condition
         dependencies: [ISFACE]
@@ -145,8 +153,10 @@ spec:
       artifacts:
       - name: cropImage
         path: /tmp/image.jpg
+      - name: CODE
+        path: src/
     container:
-      image: python:2.7-alpine3.7
+      image: gcr.io/argo-edan/facerec
       command: [python,  /src/facereference.py]
 
   - name: condition
