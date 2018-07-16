@@ -11,9 +11,9 @@ SIDES_SCALER = 0.28
 faceValues = []
 cropCommands = [] 
 
-face_cascade = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
-eye_cascade = cv.CascadeClassifier('haarcascade_eye.xml')
-img = cv.imread('rawimage.jpg')
+face_cascade = cv.CascadeClassifier('src/haarcascade_frontalface_alt.xml')
+eye_cascade = cv.CascadeClassifier('src/haarcascade_eye.xml')
+img = cv.imread('src/rawimage.jpg')
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 faces = face_cascade.detectMultiScale(gray, 1.3, 5)

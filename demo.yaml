@@ -8,7 +8,7 @@ spec:
   - name: main-dag
     inputs:
       parameters:
-      - name: IMAGE
+      - name: IMAGE-URL
         default: "https://i.imgur.com/QUS0pCI.jpg"
       artifacts:
       - name: CODE
@@ -16,19 +16,20 @@ spec:
           repo: https://github.com/EliZucker/Argo-Workflow-Test.git
     dag:
       tasks:
-      - name: DOWNLOAD
+      - name: DOWNLOAD-IMAGE
         template: download-image
         arguments:
           parameters:
           - name: IMAGE-URL
-            value: "{{inputs.parameters.IMAGE}}"
+            value: "{{inputs.parameters.IMAGE-URL}}"
+
       - name: LOCATE-FACES
-        dependencies: [DOWNLOAD]
+        dependencies: [DOWNLOAD-IMAGE]
         template: locate-faces
         arguments:
           artifacts:
           - name: RAW-IMAGE
-            from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+            from: "{{tasks.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
 
@@ -38,12 +39,10 @@ spec:
         arguments:
           artifacts:
           - name: RAW-IMAGE
-            from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
-          #parameters need to be updated to take imagemagick command
+            from: "{{tasks.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
           parameters:
-          - name: imagemagick-command
-            value: "{{item}}"
-        withParam: "{{tasks.LOCATE-FACES.outputs.parameters.imagemagick-commands-file}}" 
+          - name: imagemagick-commands
+            value: "{{tasks.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
 
   - name: download-image
     inputs:
@@ -52,35 +51,35 @@ spec:
     container:
       image: sequenceiq/alpine-curl
       command: ["sh", "-c"]
-      args: ["curl {{inputs.parameters.IMAGE-URL}} > /tmp/rawimage.jpg"]
+      args: ["curl {{inputs.parameters.IMAGE-URL}} > /rawimage.jpg"]
     outputs:
       artifacts:
       - name: IMAGE
-        path: /tmp/rawimage.jpg
+        path: /rawimage.jpg
+
   - name: locate-faces
     inputs:
       artifacts:
-      - name: downloaded-image
-        path: /rawimage.jpg
+      - name: RAW-IMAGE
+        path: /src/rawimage.jpg
       - name: CODE
         path: /src
     container:
-      image: python:alpine3.6
+      image: victorhcm/opencv
       command: ["bash", "-c"]
       args: [python /src/faceeyedetect.py]
     outputs:
       parameters:
-      - name: imagemagick-commands-file
+      - name: imagemagick-commands
         valueFrom:
           path: /imagemagick_commands.txt
 
   - name: crop-faces
     inputs:
       parameters:
-        name: imagemagick-command
+      - name: imagemagick-commands
       artifacts:
-      - name: downloaded-image
-        path: /rawimage.jpg
+      - name: RAW-IMAGE
     steps:
     - - name: CROP-FACE
         template: crop-face
@@ -88,21 +87,21 @@ spec:
           artifacts:
           #Will this line actually work to send the image as an argument?
           - name: RAW-IMAGE
-            from: "{{tasks.DOWNLOAD.outputs.artifacts.IMAGE}}"
+            from: "{{inputs.artifacts.RAW-IMAGE}}"
           parameters:
           - name: imagemagick-command
             value: "{{item}}"
-        withParam: "{{inputs.parameters.imagemagick-command}}"
+        withParam: "{{inputs.parameters.imagemagick-commands}}"
 
   - name: crop-face
     inputs:
+      artifacts:
+      - name: RAW-IMAGE
+        path: /rawimage.jpg
       parameters:
       - name: imagemagick-command
-      artifacts:
-      - name: downloaded-image
-        path: /rawimage.jpg
     script:
-      image: python:alpine3.6
+      image: v4tech/imagemagick
       command: ["bash", "-c"]
       args: ["{{inputs.parameters.imagemagick-command}}"]
     outputs:
