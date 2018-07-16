@@ -8,8 +8,8 @@ import sys
 TOP_SCALER = 0.56
 SIDES_SCALER = 0.28
 
-faceValues = []
-cropCommands = [] 
+face_values = []
+crop_commands = [] 
 
 face_cascade = cv.CascadeClassifier('src/haarcascade_frontalface_alt.xml')
 eye_cascade = cv.CascadeClassifier('src/haarcascade_eye.xml')
@@ -25,16 +25,16 @@ for i in range(len(faces)):
     w = faces[i, 2]
     h = faces[i, 3]
 
-    #add face x, y, width, and height to faceValues
-    faceValues.append([x-int(w*SIDES_SCALER), y-int(h*TOP_SCALER), w+2*int(w*SIDES_SCALER), h+int(h*SIDES_SCALER)+int(h*TOP_SCALER)])
+    #add face x, y, width, and height to face_values
+    face_values.append([x-int(w*SIDES_SCALER), y-int(h*TOP_SCALER), w+2*int(w*SIDES_SCALER), h+int(h*SIDES_SCALER)+int(h*TOP_SCALER)])
 
 #create list of imagemagick commands to crop each face
-for i in faceValues:
+for i in face_values:
     command = 'convert /data/rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" /tmp/cropped_face.jpg"
-    cropCommands.append(command)
+    crop_commands.append(command)
 
 with open('src/imagemagick_commands.json', 'w') as outfile:
-    json.dump([i for i in cropCommands], outfile)
+    json.dump([i for i in crop_commands], outfile)
 
 
 

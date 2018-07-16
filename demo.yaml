@@ -115,19 +115,19 @@ spec:
           parameters:
           - name: imagemagick-command
             value: "{{inputs.parameters.imagemagick-command}}"
-      - name: ISFACE
-        template: isKnownFace
+      - name: CHECK-FACE-MATCH
+        template: check-face-match
         dependencies: [CROP-FACE]
         arguments:
           artifacts:
-            - name: cropImage
+            - name: CROPPED-FACE
               from: "{{tasks.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
-      - name: CONDITION
-        template: condition
-        dependencies: [ISFACE]
-        when: "{{tasks.ISFACE.outputs.result}}"
+      - name: INCOMPLETE-STEP
+        template: incomplete-step
+        dependencies: [CHECK-FACE-MATCH]
+        when: "{{tasks.CHECK-FACE-MATCH.outputs.result}} == "unrecognized-face"
 
   - name: crop-face
     inputs:
@@ -145,18 +145,18 @@ spec:
       - name: CROPPED-FACE
         path: /tmp/cropped_face.jpg
    
-  - name: isKnownFace
+  - name: check-face-match
     inputs:
       artifacts:
-      - name: cropImage
+      - name: CROPPED-FACE
         path: /tmp/photo.jpg
       - name: CODE
-        path: src/
+        path: /src
     container:
       image: gcr.io/argo-edan/facerec
       command: [python,  /src/facereference.py]
 
-  - name: condition
+  - name: incomplete-step
     container:
       image: nginx
 
