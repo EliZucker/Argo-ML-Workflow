@@ -35,7 +35,7 @@ for i in faceValues:
 
 # print imagemagick commands to file
 orig_stdout = sys.stdout
-f = open('imagemagick_commands.txt', 'w')
+f = open('src/imagemagick_commands.txt', 'w')
 sys.stdout = f
 for i in cropCommands:
    print i 
