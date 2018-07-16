@@ -72,7 +72,7 @@ spec:
       parameters:
       - name: imagemagick-commands
         valueFrom:
-          path: /src/imagemagick_commands.txt
+          path: /src/imagemagick_commands.json
 
   - name: crop-faces
     inputs:
