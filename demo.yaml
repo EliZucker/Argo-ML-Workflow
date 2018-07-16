@@ -149,7 +149,7 @@ spec:
     inputs:
       artifacts:
       - name: cropImage
-        path: /tmp/image.jpg
+        path: /tmp/photo.jpg
       - name: CODE
         path: src/
     container:

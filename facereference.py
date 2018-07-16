@@ -1,7 +1,7 @@
 import face_recognition
 import json
 
-arr = ["muka.jpg", "alex.jpg", "jesse.jpg"]
+arr = ["/src/muka.jpg", "/src/alex.jpg", "/src/jesse.jpg"]
 unknown_image = face_recognition.load_image_file("tmp/photo.jpg")
 unknown_encoding = face_recognition.face_encodings(unknown_image)[0]
 
