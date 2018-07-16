@@ -97,11 +97,11 @@ spec:
     inputs:
       artifacts:
       - name: RAW-IMAGE
-        path: /rawimage.jpg
+        path: /data/rawimage.jpg
       parameters:
       - name: imagemagick-command
-    script:
-      image: v4tech/imagemagick
+    container:
+      image: acleancoder/imagemagick-full
       command: ["bash", "-c"]
       args: ["{{inputs.parameters.imagemagick-command}}"]
     outputs:

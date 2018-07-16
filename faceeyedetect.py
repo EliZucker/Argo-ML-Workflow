@@ -30,7 +30,7 @@ for i in range(len(faces)):
 
 #create list of imagemagick commands to crop each face
 for i in faceValues:
-    command = 'convert /data/rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" cropped_face.jpg"
+    command = 'convert /data/rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" /tmp/cropped_face.jpg"
     cropCommands.append(command)
 
 with open('src/imagemagick_commands.json', 'w') as outfile:
