@@ -72,7 +72,7 @@ spec:
       parameters:
       - name: imagemagick-commands
         valueFrom:
-          path: /src/imagemagick_commands.txt
+          path: /src/imagemagick_commands.json
 
   - name: crop-faces
     inputs:
@@ -107,11 +107,11 @@ spec:
     inputs:
       artifacts:
       - name: RAW-IMAGE
-        path: /rawimage.jpg
+        path: /data/rawimage.jpg
       parameters:
       - name: imagemagick-command
-    script:
-      image: v4tech/imagemagick
+    container:
+      image: acleancoder/imagemagick-full
       command: ["bash", "-c"]
       args: ["{{inputs.parameters.imagemagick-command}}"]
     outputs:
