@@ -82,7 +82,7 @@ spec:
       - name: RAW-IMAGE
     steps:
     - - name: CROP-FACE
-        template: crop-face
+        template: miniDag
         arguments:
           artifacts:
           #Will this line actually work to send the image as an argument?
@@ -92,18 +92,39 @@ spec:
           - name: imagemagick-command
             value: "{{item}}"
         withParam: "{{inputs.parameters.imagemagick-commands}}"
-    - - name: ISFACE
+    
+
+
+  - name: miniDag
+    inputs:
+      artifacts:
+      - name: RAW-IMAGE
+      parameters:
+      - name: imagemagick-command
+    dag:
+      tasks:
+      - name: crop-faces
+        template: facecroper
+        arguments:
+          artifacts:
+          - name: RAW-IMAGE
+            from: "{{inputs.artifacts.RAW-IMAGE}}"
+          parameters:
+          - name: imagemagick-command
+            value: "{{inputs.parameters.imagemagick-command}}"
+      - name: ISFACE
         template: isKnownFace
+        dependencies: [crop-faces]
         arguments:
           artifacts:
             - name: cropImage
-              from: "{{steps.RAW-IMAGE.outputs.artifacts.CROPPED-FACE}}"
-    - - name: CONDITION
+              from: "{{inputs.artifacts.RAW-IMAGE}}"
+      - name: CONDITION
         template: condition
-        when: "{{steps.ISFACE.outputs.result}}"
+        dependencies: [ISFACE]
+        when: "{{tasks.ISFACE.outputs.result}}"
 
-
-  - name: crop-face
+  - name: facecroper
     inputs:
       artifacts:
       - name: RAW-IMAGE
@@ -125,9 +146,8 @@ spec:
       - name: cropImage
         path: /tmp/image.jpg
     container:
-      image: python:2.7.15-alpine3.7
-      command: ["bash", "-c"]
-      args: [python /src/faceeyedetect.py]
+      image: python:2.7-alpine3.7
+      command: [python,  /src/facereference.py]
 
   - name: condition
     container:
