@@ -1,11 +1,11 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: my-argo-workflow-
+  generateName: eli-edan-argo-workflow-
 spec:
-  entrypoint: main-dag
+  entrypoint: face-project
   templates:
-  - name: main-dag
+  - name: face-project
     inputs:
       parameters:
       - name: IMAGE-URL
@@ -14,37 +14,37 @@ spec:
       - name: CODE
         git: 
           repo: https://github.com/EliZucker/Argo-Workflow-Test.git
-    dag:
-      tasks:
-      - name: DOWNLOAD-IMAGE
+    steps:
+    - - name: DOWNLOAD-IMAGE
         template: download-image
         arguments:
           parameters:
           - name: IMAGE-URL
             value: "{{inputs.parameters.IMAGE-URL}}"
 
-      - name: LOCATE-FACES
+    - - name: LOCATE-FACES
         dependencies: [DOWNLOAD-IMAGE]
         template: locate-faces
         arguments:
           artifacts:
           - name: RAW-IMAGE
-            from: "{{tasks.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
+            from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
 
-      - name: CROP-FACES
+    - - name: HANDLE-INDIVIDUAL-FACES
         dependencies: [LOCATE-FACES]
-        template: crop-faces
+        template: handle-individual-faces
         arguments:
           artifacts:
           - name: RAW-IMAGE
-            from: "{{tasks.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
+            from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
           - name: CODE
             from: "{{inputs.artifacts.CODE}}"
           parameters:
-          - name: imagemagick-commands
-            value: "{{tasks.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
+          - name: imagemagick-command
+            value: "{{item}}"
+        withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
 
   - name: download-image
     inputs:
@@ -76,37 +76,15 @@ spec:
         valueFrom:
           path: /src/imagemagick_commands.json
 
-  - name: crop-faces
+  - name: handle-individual-faces
     inputs:
       parameters:
-      - name: imagemagick-commands
+      - name: imagemagick-command
       artifacts:
       - name: RAW-IMAGE
       - name: CODE
     steps:
-    - - name: HANDLE-INDIVIDUAL-FACE
-        template: secondary-dag
-        arguments:
-          artifacts:
-          - name: RAW-IMAGE
-            from: "{{inputs.artifacts.RAW-IMAGE}}"
-          - name: CODE
-            from: "{{inputs.artifacts.CODE}}"
-          parameters:
-          - name: imagemagick-command
-            value: "{{item}}"
-        withParam: "{{inputs.parameters.imagemagick-commands}}"
-
-  - name: secondary-dag
-    inputs:
-      artifacts:
-      - name: RAW-IMAGE
-      - name: CODE
-      parameters:
-      - name: imagemagick-command
-    dag:
-      tasks:
-      - name: CROP-FACE
+    - - name: CROP-FACE
         template: crop-face
         arguments:
           artifacts:
@@ -115,19 +93,17 @@ spec:
           parameters:
           - name: imagemagick-command
             value: "{{inputs.parameters.imagemagick-command}}"
-      - name: CHECK-FACE-MATCH
+    - - name: CHECK-FACE-MATCH
         template: check-face-match
-        dependencies: [CROP-FACE]
         arguments:
           artifacts:
             - name: CROPPED-FACE
-              from: "{{tasks.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
+              from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
-      - name: INCOMPLETE-STEP
+    - - name: INCOMPLETE-STEP
         template: incomplete-step
-        dependencies: [CHECK-FACE-MATCH]
-        when: "{{tasks.CHECK-FACE-MATCH.outputs.result}} == "unrecognized-face"
+        when: "{{steps.CHECK-FACE-MATCH.outputs.result}} == unrecognized-face"
 
   - name: crop-face
     inputs:
@@ -152,13 +128,14 @@ spec:
         path: /tmp/photo.jpg
       - name: CODE
         path: /src
-    container:
+    script:
       image: gcr.io/argo-edan/facerec
       command: [python,  /src/facereference.py]
 
   - name: incomplete-step
     container:
-      image: nginx
+      image: gcr.io/argo-edan/facerec
+      command: [python,  /src/facereference.py]
 
 
   
