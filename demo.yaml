@@ -1,9 +1,17 @@
-apiVersion: argoproj.io/v1alpha1
+aalpine:latestpiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: eli-edan-argo-workflow-
 spec:
   entrypoint: face-project
+  volumeClaimTemplates:
+  - metadata:
+      name: workdir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi                  #Gi => 1024 * 1024 * 1024
   templates:
   - name: face-project
     inputs:
@@ -23,7 +31,6 @@ spec:
             value: "{{inputs.parameters.IMAGE-URL}}"
 
     - - name: LOCATE-FACES
-        dependencies: [DOWNLOAD-IMAGE]
         template: locate-faces
         arguments:
           artifacts:
@@ -33,7 +40,6 @@ spec:
             from: "{{inputs.artifacts.CODE}}"
 
     - - name: HANDLE-INDIVIDUAL-FACES
-        dependencies: [LOCATE-FACES]
         template: handle-individual-faces
         arguments:
           artifacts:
@@ -46,6 +52,9 @@ spec:
             value: "{{item}}"
         withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
 
+    - - name: MERGE-PROCESSED-FACES
+        template: merge-processed-faces
+        
   - name: download-image
     inputs:
       parameters:
@@ -101,9 +110,21 @@ spec:
               from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
-    - - name: INCOMPLETE-STEP
-        template: incomplete-step
-        when: "{{steps.CHECK-FACE-MATCH.outputs.result}} == unrecognized-face"
+    - - name: VOLUMIZE-RESULT
+        template: volumize-result
+        arguments:
+          artifacts:
+            - name: CROPPED-FACE
+              from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
+            - name: CODE
+              from: "{{inputs.artifacts.CODE}}"
+
+    # Placeholder step that only runs if the cropped face doesn't match with a supplied image
+    # - - name: PLACEHOLDER-STEP
+    #     template: placeholder-step
+    #     when: "{{steps.CHECK-FACE-MATCH.outputs.result}} == unrecognized-face"
+    
+
 
   - name: crop-face
     inputs:
@@ -132,12 +153,31 @@ spec:
       image: gcr.io/argo-edan/facerec
       command: [python,  /src/facereference.py]
 
-  - name: incomplete-step
+  # - name: placeholder-step
+  #   container:
+  #     image: gcr.io/argo-edan/facerec
+  #     command: [python,  /src/facereference.py]
+
+  - name: volumize-result
+    inputs:
+      artifacts:
+      - name: CROPPED-FACE
+        path: /tmp/photo.jpg
+      - name: CODE
+        path: /src
     container:
-      image: gcr.io/argo-edan/facerec
-      command: [python,  /src/facereference.py]
+      image: debian:stable-slim
+      command: [sh, -c]
+      args: ["cp --backup=numbered /tmp/photo.jpg /mnt/vol/face.jpg"]
+      volumeMounts: 
+      - name: workdir
+        mountPath: /mnt/vol
 
-
-  
-
-    
+  - name: merge-processed-faces
+    container:
+      image: alpine:latest 
+      command: [sh, -c]
+      args: ["ls /mnt/vol"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /mnt/vol
