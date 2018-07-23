@@ -20,3 +20,11 @@ curl -o zach.jpg http://www.hairfunk.net/wp-content/uploads/2018/03/zac-efron-ha
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
+
+curl -SO https://dl.minio.io/client/mc/release/linux-amd64/mc
+chmod +x mc
+mv mc /usr/local/bin/mc
+export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
+mc cp -r /notebooks bucketport/3dfacebucket/
