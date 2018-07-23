@@ -16,7 +16,7 @@ cd ..
 mkdir inputdir
 mkdir outputdir
 cd inputdir
-curl -o muka.jpg https://github.com/EliZucker/Argo-Workflow-Test/blob/master/muka.jpg
+curl -o zach.jpg http://www.hairfunk.net/wp-content/uploads/2018/03/zac-efron-hairstyles-in-2018-zac-efron-hairstyles-48-fprznkv-14.jpg
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
