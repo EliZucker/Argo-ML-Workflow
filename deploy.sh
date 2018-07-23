@@ -8,7 +8,7 @@ python ~/pip/install.py
 rm -r ~/pip
 pip install visvis imageio dlib
 git clone https://github.com/YadiraF/PRNet
-# pip install -U scikit-image
+pip install -U scikit-image
 cd PRNet/Data/net-data
 curl -o 256_256_resfcn256_weight.data-00000-of-00001 https://github.com/EliZucker/Argo-Workflow-Test/blob/master/256_256_resfcn256_weight.data-00000-of-00001?raw=true -L
 cd ..
