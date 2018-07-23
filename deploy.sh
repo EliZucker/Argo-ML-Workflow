@@ -1,6 +1,6 @@
 #!/bin/bash
 apt-get update -y
-apt-get install -y git
+apt-get install -y git dlib
 git clone https://github.com/YadiraF/PRNet
 pip install -U scikit-image
 cd PRNet/Data/net-data
