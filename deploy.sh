@@ -10,7 +10,14 @@ pip install visvis imageio dlib
 git clone https://github.com/YadiraF/PRNet
 pip install -U scikit-image
 cd PRNet/Data/net-data
-curl -o 256_256_resfcn256_weight.data-00000-of-00001 https://github.com/EliZucker/Argo-Workflow-Test/blob/master/256_256_resfcn256_weight.data-00000-of-00001?raw=true -L
+#import minio
+curl -SO https://dl.minio.io/client/mc/release/linux-amd64/mc
+chmod +x mc
+mv mc /usr/local/bin/mc
+export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
+mc cp bucketport/3dfacebucket/256_256_resfcn256_weight.data-00000-of-00001 256_256_resfcn256_weight.data-00000-of-00001
 cd ..
 cd ..
 mkdir inputdir
@@ -20,11 +27,5 @@ curl -o zach.jpg http://www.hairfunk.net/wp-content/uploads/2018/03/zac-efron-ha
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
+mc cp -r /notebooks/PRNet/outputdir bucketport/3dfacebucket/
 
-curl -SO https://dl.minio.io/client/mc/release/linux-amd64/mc
-chmod +x mc
-mv mc /usr/local/bin/mc
-export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
-export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
-mc cp -r /notebooks bucketport/3dfacebucket/
