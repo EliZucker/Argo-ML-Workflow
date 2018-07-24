@@ -24,6 +24,8 @@ mkdir inputdir
 mkdir outputdir
 cd inputdir
 curl -o zach.jpg http://www.hairfunk.net/wp-content/uploads/2018/03/zac-efron-hairstyles-in-2018-zac-efron-hairstyles-48-fprznkv-14.jpg
+curl -o obama.jpg https://freebeacon.com/wp-content/uploads/2017/03/obama-face-1.jpg
+curl -o sarah.jpg https://s.newsweek.com/sites/www.newsweek.com/files/styles/lg/public/2011/05/01/1337256000000.cached_11.jpg
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
