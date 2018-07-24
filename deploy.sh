@@ -7,13 +7,13 @@ wget -O ~/pip/install.py https://bootstrap.pypa.io/get-pip.py
 python ~/pip/install.py
 rm -r ~/pip
 pip install visvis imageio dlib
-git clone https://github.com/YadiraF/PRNet
 pip install -U scikit-image
-cd PRNet/Data/net-data
-#import minio
 curl -SO https://dl.minio.io/client/mc/release/linux-amd64/mc
 chmod +x mc
 mv mc /usr/local/bin/mc
+
+git clone https://github.com/YadiraF/PRNet
+cd PRNet/Data/net-data
 export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
