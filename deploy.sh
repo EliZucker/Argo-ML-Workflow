@@ -16,3 +16,4 @@ python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
 rm -rf /mnt/vol/outputdir
 mv outputdir /mnt/vol/
+echo IMAGE SUCCESSFULLY COMPLETED
