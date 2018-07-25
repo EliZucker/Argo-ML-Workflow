@@ -8,8 +8,7 @@ cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
-cd inputdir
-mv /mnt/vol vol
+mv /mnt/vol/* inputdir/
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True

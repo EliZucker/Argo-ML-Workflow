@@ -37,6 +37,9 @@ spec:
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
 
+      - name: MINIO
+        template: minio
+        
     - - name: HANDLE-INDIVIDUAL-FACES
         template: handle-individual-faces
         arguments:
@@ -52,9 +55,6 @@ spec:
 
     - - name: TFJOB
         template: tfjob
-
-    - - name: MINIO
-        template: minio
         
   - name: download-image
     inputs:
@@ -213,6 +213,10 @@ spec:
             Ps:
               template:
                 spec:
+                  volumes:
+                  - name: workdir
+                    persistentVolumeClaim:
+                      claimName: face-processing-demo-pvc
                   containers:
                   - args:
                     - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
@@ -234,6 +238,10 @@ spec:
               replicas: 1
               template:
                 spec:
+                  volumes:
+                  - name: workdir
+                    persistentVolumeClaim:
+                      claimName: face-processing-demo-pvc
                   containers:
                   - args:
                     - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
@@ -257,9 +265,9 @@ spec:
       command: [sh, -c]
       args: ["
         export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE &&
-        export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-        mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
-        mc cp -r bucketport/3dfacebucket/vol /tmp
+        export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY &&
+        mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY &&
+        mc cp -r bucketport/3dfacebucket/vol /tmp &&
         mc rm bucketport/3dfacebucket/vol
       "]
     outputs:
