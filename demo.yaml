@@ -226,7 +226,7 @@ spec:
             uid: "{{workflow.uid}}"
           labels:
             ksonnet.io/component: dockerpnet
-          name: dockerpnet
+          generateName: dockerpnet-
           namespace: default
         spec:
           tfReplicaSpecs:
