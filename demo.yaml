@@ -52,8 +52,13 @@ spec:
 
     - - name: TFJOB
         template: tfjob
-    - - name: MINIO
-        template: minio    
+
+    - - name: TF-RESULT-TO-ARTIFACT
+        template: tf-result-to-artifact    
+        arguments:
+          artifacts:
+          - name: "CODE"
+            from: "{{inputs.artifacts.CODE}}"
 
         
   - name: download-image
@@ -189,6 +194,21 @@ spec:
       - name: workdir
         mountPath: /mnt/vol
 
+  - name: tf-result-to-artifact
+    inputs:
+      artifacts:
+      - name: CODE
+        path: /src
+    container:
+      image: alpine:latest
+      volumeMounts: 
+      - name: workdir
+        mountPath: /mnt/vol
+    outputs:
+      artifacts:
+      - name: 3D-FACES
+        path: /mnt/vol/outputdir
+
   - name: tfjob
     resource:
       action: create
@@ -234,21 +254,5 @@ spec:
                       limits:
                         nvidia.com/gpu: "1"
                   restartPolicy: OnFailure
- #retrieve TFJOB output from minio bucket                 
-  - name: artifactize
-    container:
-      image: minio/mc
-      command: [sh, -c]
-      args: ["
-        export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE &&
-        export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY &&
-        mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY &&
-        mc cp -r bucketport/3dfacebucket/outputdir /tmp &&
-        mc rm -r --force bucketport/3dfacebucket/outputdir
-      "]
-    outputs:
-      artifacts:
-      - name: resultfaces
-        path: /tmp/outputdir
 
                   
