@@ -180,8 +180,6 @@ spec:
   - name: volumize-result
     inputs:
       artifacts:
-      - name: CROPPED-FACE
-        path: /tmp/photo.jpg
       - name: CODE
         path: /src
     container:
