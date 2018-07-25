@@ -54,6 +54,9 @@ spec:
 
     - - name: TFJOB
         template: tfjob
+
+    - - name: MINIO
+        template: minio
         
   - name: download-image
     inputs:
@@ -200,13 +203,16 @@ spec:
                 spec:
                   containers:
                   - args:
-                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy2.sh
+                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
                       | bash"
                     command:
                     - /bin/sh
                     - -c
                     image: gcr.io/argo-edan/tensfordlib
                     name: tensorflow
+                    volumeMounts: 
+                    - name: workdir
+                      mountPath: /mnt/vol
                     resources:
                       limits:
                         nvidia.com/gpu: "1"
@@ -218,14 +224,35 @@ spec:
                 spec:
                   containers:
                   - args:
-                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy2.sh
+                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
                       | bash"
                     command:
                     - /bin/sh
                     - -c
                     image: gcr.io/argo-edan/tensfordlib
                     name: tensorflow
+                    volumeMounts: 
+                    - name: workdir
+                      mountPath: /mnt/vol
                     resources:
                       limits:
                         nvidia.com/gpu: "1"
                   restartPolicy: OnFailure
+ #retrieve TFJOB output from minio bucket                 
+  - name: minio
+    container:
+      image: minio/mc
+      command: [sh, -c]
+      args: ["
+        export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE &&
+        export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
+        mc cp -r bucketport/3dfacebucket/vol /tmp
+        mc rm bucketport/3dfacebucket/vol
+      "]
+    outputs:
+      artifacts:
+      - name: resultfaces
+        path: /tmp
+
+                  
