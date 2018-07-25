@@ -8,10 +8,11 @@ cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
-mv /mnt/vol/* inputdir/
+mv /mnt/vol/input/* inputdir/
 cd inputdir
 for file in *; do mv "$file" "${file}".jpg; done
 cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
+rm -rf /mnt/vol/outputdir
 mv outputdir /mnt/vol/

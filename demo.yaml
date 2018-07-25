@@ -187,7 +187,7 @@ spec:
     container:
       image: debian:stable-slim
       command: [sh, -c]
-      args: ["cp --backup=numbered /tmp/photo.jpg /mnt/vol/face"]
+      args: ["mkdir -p /mnt/vol/input/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input/face"]
       volumeMounts: 
       - name: workdir
         mountPath: /mnt/vol
