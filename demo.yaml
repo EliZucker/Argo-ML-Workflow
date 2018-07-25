@@ -52,9 +52,9 @@ spec:
 
     - - name: TFJOB
         template: tfjob
-
     - - name: MINIO
-        template: minio
+        template: minio    
+
         
   - name: download-image
     inputs:
@@ -184,7 +184,7 @@ spec:
     container:
       image: debian:stable-slim
       command: [sh, -c]
-      args: ["cp --backup=numbered /tmp/photo.jpg /mnt/vol/face.jpg"]
+      args: ["cp --backup=numbered /tmp/photo.jpg /mnt/vol/face"]
       volumeMounts: 
       - name: workdir
         mountPath: /mnt/vol
@@ -192,8 +192,8 @@ spec:
   - name: tfjob
     resource:
       action: create
-      successCondition: status.tfReplicaStatuses.PS.succeeded > 0, status.tfReplicaStatuses.Worker.succeeded > 0
-      failureCondition: status.tfReplicaStatuses.PS.failed > 0
+      successCondition: status.tfReplicaStatuses.Worker.succeeded > 0
+      failureCondition: status.tfReplicaStatuses.Worker.failed > 0
       manifest: |
         apiVersion: kubeflow.org/v1alpha2
         kind: TFJob
@@ -210,30 +210,6 @@ spec:
           namespace: default
         spec:
           tfReplicaSpecs:
-            Ps:
-              template:
-                spec:
-                  volumes:
-                  - name: workdir
-                    persistentVolumeClaim:
-                      claimName: face-processing-demo-pvc
-                  containers:
-                  - args:
-                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
-                      | bash"
-                    command:
-                    - /bin/sh
-                    - -c
-                    image: gcr.io/argo-edan/tensfordlib
-                    name: tensorflow
-                    volumeMounts: 
-                    - name: workdir
-                      mountPath: /mnt/vol
-                    resources:
-                      limits:
-                        nvidia.com/gpu: "1"
-                  restartPolicy: OnFailure
-              tfReplicaType: PS
             Worker:
               replicas: 1
               template:
@@ -259,7 +235,7 @@ spec:
                         nvidia.com/gpu: "1"
                   restartPolicy: OnFailure
  #retrieve TFJOB output from minio bucket                 
-  - name: minio
+  - name: artifactize
     container:
       image: minio/mc
       command: [sh, -c]
@@ -268,7 +244,7 @@ spec:
         export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY &&
         mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY &&
         mc cp -r bucketport/3dfacebucket/outputdir /tmp &&
-        mc rm bucketport/3dfacebucket/outputdir
+        mc rm -r --force bucketport/3dfacebucket/outputdir
       "]
     outputs:
       artifacts:

@@ -9,7 +9,9 @@ cd ..
 mkdir inputdir
 mkdir outputdir
 mv /mnt/vol/* inputdir/
+cd inputdir
+for file in *; do mv "$file" "${file}".jpg; done
+cd ..
 python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
-mc cp -r /notebooks/PRNet/outputdir bucketport/3dfacebucket/
-
+mv outputdir /mnt/vol/
