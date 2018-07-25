@@ -136,6 +136,8 @@ spec:
           artifacts:
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
+            - name: CROPPED-FACE
+              from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
               
 
     # Placeholder step that only runs if the cropped face doesn't match with a supplied image
@@ -180,6 +182,8 @@ spec:
   - name: volumize-result
     inputs:
       artifacts:
+      - name: CROPPED-FACE
+        path: /tmp/photo.jpg
       - name: CODE
         path: /src
     container:
