@@ -52,8 +52,8 @@ spec:
             value: "{{item}}"
         withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
 
-    - - name: MERGE-PROCESSED-FACES
-        template: merge-processed-faces
+    - - name: TFJOB
+        template: tfjob
         
   - name: download-image
     inputs:
@@ -118,6 +118,7 @@ spec:
               from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
+              
 
     # Placeholder step that only runs if the cropped face doesn't match with a supplied image
     # - - name: PLACEHOLDER-STEP
@@ -173,11 +174,58 @@ spec:
       - name: workdir
         mountPath: /mnt/vol
 
-  - name: merge-processed-faces
-    container:
-      image: alpine:latest 
-      command: [sh, -c]
-      args: ["ls /mnt/vol"]
-      volumeMounts:
-      - name: workdir
-        mountPath: /mnt/vol
+  - name: tfjob
+    resource:
+      action: create
+      successCondition: status.tfReplicaStatuses.PS.succeeded > 0, status.tfReplicaStatuses.Worker.succeeded > 0
+      failureCondition: status.tfReplicaStatuses.PS.failed > 0
+      manifest: |
+        apiVersion: kubeflow.org/v1alpha2
+        kind: TFJob
+        metadata:
+          ownerReferences:
+          - apiVersion: argoproj.io/v1alpha1
+            blockOwnerDeletion: true
+            kind: Workflow
+            name: "{{workflow.name}}"
+            uid: "{{workflow.uid}}"
+          labels:
+            ksonnet.io/component: dockerpnet
+          name: dockerpnet
+          namespace: default
+        spec:
+          tfReplicaSpecs:
+            Ps:
+              template:
+                spec:
+                  containers:
+                  - args:
+                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy2.sh
+                      | bash"
+                    command:
+                    - /bin/sh
+                    - -c
+                    image: gcr.io/argo-edan/tensfordlib
+                    name: tensorflow
+                    resources:
+                      limits:
+                        nvidia.com/gpu: "1"
+                  restartPolicy: OnFailure
+              tfReplicaType: PS
+            Worker:
+              replicas: 1
+              template:
+                spec:
+                  containers:
+                  - args:
+                    - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy2.sh
+                      | bash"
+                    command:
+                    - /bin/sh
+                    - -c
+                    image: gcr.io/argo-edan/tensfordlib
+                    name: tensorflow
+                    resources:
+                      limits:
+                        nvidia.com/gpu: "1"
+                  restartPolicy: OnFailure
