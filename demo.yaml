@@ -134,8 +134,6 @@ spec:
         template: volumize-result
         arguments:
           artifacts:
-            - name: CROPPED-FACE
-              from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
               
