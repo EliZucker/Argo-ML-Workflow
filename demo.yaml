@@ -1,17 +1,13 @@
-aalpine:latestpiVersion: argoproj.io/v1alpha1
+apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: eli-edan-argo-workflow-
 spec:
   entrypoint: face-project
-  volumeClaimTemplates:
-  - metadata:
-      name: workdir
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 1Gi                  #Gi => 1024 * 1024 * 1024
+  volumes:
+  - name: workdir
+    persistentVolumeClaim:
+      claimName: face-processing-demo-pvc
   templates:
   - name: face-project
     inputs:
@@ -29,7 +25,9 @@ spec:
           parameters:
           - name: IMAGE-URL
             value: "{{inputs.parameters.IMAGE-URL}}"
-
+      - name: APPLY-PVC
+        template: apply-pvc
+        
     - - name: LOCATE-FACES
         template: locate-faces
         arguments:
@@ -70,7 +68,21 @@ spec:
       artifacts:
       - name: IMAGE
         path: /rawimage.jpg
-
+  
+  - name: apply-pvc
+    resource:
+      action: apply
+      manifest: |
+        kind: PersistentVolumeClaim
+        apiVersion: v1
+        metadata:
+          name: face-processing-demo-pvc
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 1Gi
+          
   - name: locate-faces
     inputs:
       artifacts:
