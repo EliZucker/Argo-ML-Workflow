@@ -20,7 +20,7 @@ do
         if [ -d '/mnt/vol/input-'$TOKEN ]
             then echo INPUT FOLDER DOES EXIST
             mv /mnt/vol/input-$TOKEN/* inputdir/
-            rm -rf /mnt/vol/input-$TOKEN/*
+            rm -rf /mnt/vol/input-$TOKEN/
             cd inputdir
             for file in *; do mv "$file" "${file}".jpg; done
             cd ..
