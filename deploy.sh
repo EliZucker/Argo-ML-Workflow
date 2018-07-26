@@ -10,11 +10,12 @@ mkdir inputdir
 mkdir outputdir
 for directory in /mnt/vol/outputdir-*;
 do
+    echo $directory
     if   ! ls -1qA $directory | grep -q .
         then  echo $directory IS EMPTY
         i=$((${#directory}-6))
         TOKEN=${directory:$i:6}
-        if [ -d '/mnt/vol/input-${TOKEN}' ]
+        if [ -d '/mnt/vol/input-'$TOKEN ]
             then echo input not deleted
             mv /mnt/vol/input-$TOKEN/* inputdir/
             cd inputdir
@@ -24,9 +25,11 @@ do
             python demo.py -i inputdir -o outputdir --isDlib True
             mv outputdir/* /mnt/vol/outputdir-$TOKEN
         fi
+        echo input does not exist
     fi
 
     #TODO random generator should not generate non number letter charaters
     #if statements to see if string already exists
-    echo IMAGE SUCCESSFULLY COMPLETED
+    
 done
+echo IMAGE SUCCESSFULLY COMPLETED
