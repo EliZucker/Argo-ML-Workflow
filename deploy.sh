@@ -13,11 +13,11 @@ ls /mnt/vol/
 for directory in /mnt/vol/outputdir-*;
 do
     echo $directory
-    if   ! ls -1qA $directory | grep -q .
-        then  echo $directory IS EMPTY
+    if  [ ! ls -1qA $directory | grep -q . ]
+        then echo $directory IS EMPTY
         i=$((${#directory}-6))
         TOKEN=${directory:$i:6}
-        if [ -d '/mnt/vol/input-'$TOKEN ] && 
+        if [ -d '/mnt/vol/input-'$TOKEN ]
             then echo INPUT FOLDER DOES EXIST
             mv /mnt/vol/input-$TOKEN/* inputdir/
             rm -rf /mnt/vol/input-$TOKEN/*
