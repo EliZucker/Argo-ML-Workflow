@@ -57,10 +57,6 @@ spec:
 
     - - name: TFJOB
         template: tfjob
-        arguments:
-          parameters:
-          - name: TOKEN
-            value: "{{steps.GENERATE-TOKEN.outputs.result}}"
 
     - - name: TF-RESULT-TO-ARTIFACT
         template: tf-result-to-artifact    
@@ -235,19 +231,20 @@ spec:
       - name: CODE
         path: /src
     container:
-      image: alpine:latest
+      image: debian:stable-slim
+      command: [sh, -c]
+      args: ["
+        mv /mnt/vol/outputdir-{inputs.parameters.TOKEN}} /tmp/
+      "]
       volumeMounts: 
       - name: workdir
         mountPath: /mnt/vol
     outputs:
       artifacts:
       - name: 3D-FACES
-        path: /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}
+        path: /tmp/outputdir-{{inputs.parameters.TOKEN}}
 
   - name: tfjob
-    inputs:
-      parameters:
-      - name: TOKEN
     resource:
       action: create
       successCondition: status.tfReplicaStatuses.Worker.succeeded > 0

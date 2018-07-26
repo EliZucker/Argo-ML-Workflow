@@ -8,13 +8,25 @@ cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
-mv /mnt/vol/input-{{inputs.parameters.TOKEN}}/* inputdir/
-cd inputdir
-for file in *; do mv "$file" "${file}".jpg; done
-cd ..
-# python run_basics.py
-python demo.py -i inputdir -o outputdir --isDlib True
-mv outputdir /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}
-#TODO random generator should not generate non number letter charaters
-#if statements to see if string already exists
-echo IMAGE SUCCESSFULLY COMPLETED
+for directory in /mnt/vol/outputdir-*;
+do
+    if   ! ls -1qA $directory | grep -q .
+        then  echo $directory IS EMPTY
+        i=$((${#directory}-6))
+        TOKEN=${directory:$i:6}
+        if [ -d '/mnt/vol/input-${TOKEN}' ]
+            then echo input not deleted
+            mv /mnt/vol/input-$TOKEN/* inputdir/
+            cd inputdir
+            for file in *; do mv "$file" "${file}".jpg; done
+            cd ..
+            # python run_basics.py
+            python demo.py -i inputdir -o outputdir --isDlib True
+            mv outputdir/* /mnt/vol/outputdir-$TOKEN
+        fi
+    fi
+
+    #TODO random generator should not generate non number letter charaters
+    #if statements to see if string already exists
+    echo IMAGE SUCCESSFULLY COMPLETED
+done
