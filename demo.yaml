@@ -218,7 +218,7 @@ spec:
     container:
       image: debian:stable-slim
       command: [sh, -c]
-      args: ["mkdir -p /mnt/vol/input-{{inputs.parameters.TOKEN}}/; mkdir -p /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input/face"]
+      args: ["mkdir -p /mnt/vol/input-{{inputs.parameters.TOKEN}}/; mkdir -p /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input-{{inputs.parameters.TOKEN}}/face"]
       volumeMounts: 
       - name: workdir
         mountPath: /mnt/vol
@@ -234,7 +234,7 @@ spec:
       image: debian:stable-slim
       command: [sh, -c]
       args: ["
-        mv /mnt/vol/outputdir-{inputs.parameters.TOKEN}} /tmp/
+        mv /mnt/vol/outputdir-{{inputs.parameters.TOKEN}} /tmp/
       "]
       volumeMounts: 
       - name: workdir

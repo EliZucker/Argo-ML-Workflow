@@ -8,6 +8,8 @@ cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
+#big mess of bash code for checking which inputs exist and if their output is empty
+ls /mnt/vol/
 for directory in /mnt/vol/outputdir-*;
 do
     echo $directory
@@ -15,17 +17,19 @@ do
         then  echo $directory IS EMPTY
         i=$((${#directory}-6))
         TOKEN=${directory:$i:6}
-        if [ -d '/mnt/vol/input-'$TOKEN ]
-            then echo input not deleted
+        if [ -d '/mnt/vol/input-'$TOKEN ] && 
+            then echo INPUT FOLDER DOES EXIST
             mv /mnt/vol/input-$TOKEN/* inputdir/
+            rm -rf /mnt/vol/input-$TOKEN/*
             cd inputdir
             for file in *; do mv "$file" "${file}".jpg; done
             cd ..
             # python run_basics.py
             python demo.py -i inputdir -o outputdir --isDlib True
             mv outputdir/* /mnt/vol/outputdir-$TOKEN
+            else echo INPUT FOLDER DOES NOT EXIST
         fi
-        echo input does not exist
+        else echo echo $directory IS NOT EMPTY
     fi
 
     #TODO random generator should not generate non number letter charaters
