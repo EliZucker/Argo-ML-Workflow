@@ -13,7 +13,7 @@ ls /mnt/vol/
 for directory in /mnt/vol/outputdir-*;
 do
     echo $directory
-    if  [ ! ls -1qA $directory | grep -q . ]
+    if  ! ls -1qA $directory | grep -q .
         then echo $directory IS EMPTY
         i=$((${#directory}-6))
         TOKEN=${directory:$i:6}
@@ -31,9 +31,6 @@ do
         fi
         else echo echo $directory IS NOT EMPTY
     fi
-
-    #TODO random generator should not generate non number letter charaters
-    #if statements to see if string already exists
     
 done
 echo IMAGE SUCCESSFULLY COMPLETED
