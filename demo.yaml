@@ -36,7 +36,10 @@ spec:
             from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
-
+      
+      - name: GENERATE-TOKEN
+        template: generate-token
+    
     - - name: HANDLE-INDIVIDUAL-FACES
         template: handle-individual-faces
         arguments:
@@ -46,16 +49,25 @@ spec:
           - name: CODE
             from: "{{inputs.artifacts.CODE}}"
           parameters:
+          - name: TOKEN
+            value: "{{steps.GENERATE-TOKEN.outputs.result}}"
           - name: imagemagick-command
             value: "{{item}}"
         withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
 
     - - name: TFJOB
         template: tfjob
+        arguments:
+          parameters:
+          - name: TOKEN
+            value: "{{steps.GENERATE-TOKEN.outputs.result}}"
 
     - - name: TF-RESULT-TO-ARTIFACT
         template: tf-result-to-artifact    
         arguments:
+          parameters:
+          - name: TOKEN
+            value: "{{steps.GENERATE-TOKEN.outputs.result}}"
           artifacts:
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
@@ -88,6 +100,21 @@ spec:
             requests:
               storage: 1Gi
           
+  - name: generate-token
+    script:
+      image: debian:stable-slim
+      command: [sh, -c]
+      args: ["
+      RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6)
+      && while [ -d '/mnt/vol/input-${RAND}' ]; 
+      do RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6);
+      done; 
+      echo $RAND
+      "]
+      volumeMounts: 
+      - name: workdir
+        mountPath: /mnt/vol
+
   - name: locate-faces
     inputs:
       artifacts:
@@ -109,6 +136,7 @@ spec:
     inputs:
       parameters:
       - name: imagemagick-command
+      - name: TOKEN
       artifacts:
       - name: RAW-IMAGE
       - name: CODE
@@ -133,6 +161,9 @@ spec:
     - - name: VOLUMIZE-RESULT
         template: volumize-result
         arguments:
+          parameters:
+            - name: TOKEN
+              value: "{{inputs.parameters.TOKEN}}"
           artifacts:
             - name: CODE
               from: "{{inputs.artifacts.CODE}}"
@@ -181,6 +212,8 @@ spec:
 
   - name: volumize-result
     inputs:
+      parameters:
+      - name: TOKEN
       artifacts:
       - name: CROPPED-FACE
         path: /tmp/photo.jpg
@@ -189,13 +222,15 @@ spec:
     container:
       image: debian:stable-slim
       command: [sh, -c]
-      args: ["mkdir -p /mnt/vol/input/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input/face"]
+      args: ["mkdir -p /mnt/vol/input-{{inputs.parameters.TOKEN}}/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input/face"]
       volumeMounts: 
       - name: workdir
         mountPath: /mnt/vol
 
   - name: tf-result-to-artifact
     inputs:
+      parameters:
+        - name: TOKEN
       artifacts:
       - name: CODE
         path: /src
@@ -207,9 +242,12 @@ spec:
     outputs:
       artifacts:
       - name: 3D-FACES
-        path: /mnt/vol/outputdir
+        path: /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}
 
   - name: tfjob
+    inputs:
+      parameters:
+      - name: TOKEN
     resource:
       action: create
       successCondition: status.tfReplicaStatuses.Worker.succeeded > 0

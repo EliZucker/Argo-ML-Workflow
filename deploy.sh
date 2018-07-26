@@ -8,12 +8,13 @@ cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
-mv /mnt/vol/input/* inputdir/
+mv /mnt/vol/input-{{inputs.parameters.TOKEN}}/* inputdir/
 cd inputdir
 for file in *; do mv "$file" "${file}".jpg; done
 cd ..
-python run_basics.py
+# python run_basics.py
 python demo.py -i inputdir -o outputdir --isDlib True
-rm -rf /mnt/vol/outputdir
-mv outputdir /mnt/vol/
+mv outputdir /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}
+#TODO random generator should not generate non number letter charaters
+#if statements to see if string already exists
 echo IMAGE SUCCESSFULLY COMPLETED
