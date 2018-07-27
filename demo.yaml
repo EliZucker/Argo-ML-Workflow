@@ -57,11 +57,11 @@ spec:
 
     - - name: TFJOB
         template: tfjob
-        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == exists"
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"
 
     - - name: TF-RESULT-TO-ARTIFACT
         template: tf-result-to-artifact
-        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == exists"   
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"   
         arguments:
           parameters:
           - name: TOKEN
@@ -72,7 +72,7 @@ spec:
 
     - - name: No-FACES-FOUND
         template: noimage
-        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != exists"
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == []"
 
   - name: download-image
     inputs:
