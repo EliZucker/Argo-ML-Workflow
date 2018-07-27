@@ -70,7 +70,7 @@ spec:
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
 
-    - - name: No-FACES-FOUND
+      - name: No-FACES-FOUND
         template: noimage
         when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == []"
 
@@ -109,7 +109,8 @@ spec:
       RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6)
       && while [ -d '/mnt/vol/input-${RAND}' ]; 
       do RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6);
-      done; 
+      done;
+      rm -rf /mnt/vol/outputdir-${RAND};
       echo $RAND
       "]
       volumeMounts: 
