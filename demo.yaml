@@ -57,9 +57,11 @@ spec:
 
     - - name: TFJOB
         template: tfjob
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == exists"
 
     - - name: TF-RESULT-TO-ARTIFACT
-        template: tf-result-to-artifact    
+        template: tf-result-to-artifact
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == exists"   
         arguments:
           parameters:
           - name: TOKEN
@@ -68,7 +70,10 @@ spec:
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
 
-        
+    - - name: No-FACES-FOUND
+        template: noimage
+        when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != exists"
+
   - name: download-image
     inputs:
       parameters:
@@ -146,14 +151,14 @@ spec:
           parameters:
           - name: imagemagick-command
             value: "{{inputs.parameters.imagemagick-command}}"
-    - - name: CHECK-FACE-MATCH
-        template: check-face-match
-        arguments:
-          artifacts:
-            - name: CROPPED-FACE
-              from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
-            - name: CODE
-              from: "{{inputs.artifacts.CODE}}"
+    # - - name: CHECK-FACE-MATCH
+    #     template: check-face-match
+    #     arguments:
+    #       artifacts:
+    #         - name: CROPPED-FACE
+    #           from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
+    #         - name: CODE
+    #           from: "{{inputs.artifacts.CODE}}"
     - - name: VOLUMIZE-RESULT
         template: volumize-result
         arguments:
@@ -190,16 +195,16 @@ spec:
       - name: CROPPED-FACE
         path: /tmp/cropped_face.jpg
    
-  - name: check-face-match
-    inputs:
-      artifacts:
-      - name: CROPPED-FACE
-        path: /tmp/photo.jpg
-      - name: CODE
-        path: /src
-    script:
-      image: gcr.io/argo-edan/facerec
-      command: [python,  /src/facereference.py]
+  # - name: check-face-match
+  #   inputs:
+  #     artifacts:
+  #     - name: CROPPED-FACE
+  #       path: /tmp/photo.jpg
+  #     - name: CODE
+  #       path: /src
+  #   script:
+  #     image: gcr.io/argo-edan/facerec
+  #     command: [python,  /src/facereference.py]
 
   # - name: placeholder-step
   #   container:
@@ -290,4 +295,10 @@ spec:
                         nvidia.com/gpu: "1"
                   restartPolicy: OnFailure
 
+  - name: noimage
+    script:
+      image: debian:stable-slim
+      command: [sh, -c]
+      args: ["echo no faces detected"]
+      
                   

@@ -10,13 +10,13 @@ mkdir inputdir
 mkdir outputdir
 #big mess of bash code for checking which inputs exist and if their output is empty
 ls /mnt/vol/
-for directory in /mnt/vol/outputdir-*;
+for directory in /mnt/vol/input-*;
 do
+    i=$((${#directory}-6))
+    TOKEN=${directory:$i:6}
     echo $directory
-    if  ! ls -1qA $directory | grep -q .
-        then echo $directory IS EMPTY
-        i=$((${#directory}-6))
-        TOKEN=${directory:$i:6}
+    if  ! ls -1qA /mnt/vol/outputdir-$TOKEN | grep -q .
+        then echo /mnt/vol/outputdir-$TOKEN IS EMPTY
         if [ -d '/mnt/vol/input-'$TOKEN ]
             then echo INPUT FOLDER DOES EXIST
             mv /mnt/vol/input-$TOKEN/* inputdir/
@@ -29,7 +29,7 @@ do
             mv outputdir/* /mnt/vol/outputdir-$TOKEN
             else echo INPUT FOLDER DOES NOT EXIST
         fi
-        else echo echo $directory IS NOT EMPTY
+        else echo /mnt/vol/outputdir-$TOKEN IS NOT EMPTY
     fi
     
 done
