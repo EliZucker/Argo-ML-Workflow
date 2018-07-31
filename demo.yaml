@@ -34,8 +34,6 @@ spec:
           artifacts:
           - name: RAW-IMAGE
             from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
-          - name: "CODE"
-            from: "{{inputs.artifacts.CODE}}"
       
       - name: GENERATE-TOKEN
         template: generate-token
@@ -122,12 +120,10 @@ spec:
       artifacts:
       - name: RAW-IMAGE
         path: /src/rawimage.jpg
-      - name: CODE
-        path: /src
     container:
-      image: victorhcm/opencv
+      image: gcr.io/argo-edan/newfacedetect
       command: ["bash", "-c"]
-      args: [python /src/faceeyedetect.py]
+      args: [python /root/facedetection/find_faces.py]
     outputs:
       parameters:
       - name: imagemagick-commands
