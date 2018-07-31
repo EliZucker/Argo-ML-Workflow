@@ -32,7 +32,8 @@ jsonnet version: v0.10.0
 client-go version:
 ```
 
-+ Kubeflow<br/>
++ Kubeflow
+
 Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)
 
 ### Deploy Our Project
