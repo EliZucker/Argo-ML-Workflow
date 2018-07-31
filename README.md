@@ -33,7 +33,7 @@ client-go version:
 ```
 
 + Kubeflow<br/>
-`Instructions for deploying kubeflow can be found[here](docs/KUBEFLOW.md)`
+Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)
 
 ### Deploy Our Project
 ```
@@ -41,3 +41,11 @@ git clone https://github.com/EliZucker/Argo-Workflow-Test
 cd Argo-Workflow-Test
 argo submit demo.yaml -p img-url="yourimagehere.jpg"
 ```
+
+## Authors
++ **[Edan Sneh](https://github.com/EdanSneh)** - Intuit Intern
++ **[Eli Zucker](http://github.com/EliZucker)** - Intuit Intern
+
+## Acknowledgments
+Special thanks to:
++ [Jesse Suen](http://github.com/) for countlessly help along the way
