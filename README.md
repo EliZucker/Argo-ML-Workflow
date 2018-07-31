@@ -19,6 +19,11 @@ argo: v2.1.1
   Platform: darwin/amd64
 ```
 
+
+
+
+
+
 + Kubectl
 ```
 kubectl version
@@ -26,7 +31,7 @@ Client Version: version.Info{Major:"1", Minor:"11", GitVersion:"v1.11.0", GitCom
 Server Version: version.Info{Major:"1", Minor:"10+", GitVersion:"v1.10.5-gke.3", GitCommit:"6265b9797fc8680c8395abeab12c1e3bad14069a", GitTreeState:"clean", BuildDate:"2018-07-19T23:02:51Z", GoVersion:"go1.9.3b4", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
-+ Kubeflow (reauires ks)
++ Kubeflow (requires ks)
 further instructions for deploying kubeflow [here](./KUBEFLOW.md)
 
 ### Deploy Our Project
