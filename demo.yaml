@@ -123,7 +123,11 @@ spec:
     container:
       image: gcr.io/argo-edan/newfacedetect
       command: ["bash", "-c"]
-      args: [python /root/facedetection/find_faces.py]
+      args: ["cd /root/facedetection &&
+      git clone https://github.com/EliZucker/Argo-Workflow-Test.git &&
+      mv /root/facedetection/Argo-Workflow-Test/find_faces.py /root/facedetection &&
+      cd - &&
+      python /root/facedetection/find_faces.py"]
     outputs:
       parameters:
       - name: imagemagick-commands
