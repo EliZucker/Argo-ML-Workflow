@@ -49,8 +49,8 @@ SIDES_SCALER = 0.28
 face_values_cv = []
 crop_commands_cv = [] 
 
-face_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/haarcascade_frontalface_alt.xml')
-eye_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/haarcascade_eye.xml')
+face_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/opencv_classifiers/haarcascade_frontalface_alt.xml')
+eye_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/opencv_classifiers/haarcascade_eye.xml')
 
 img = cv.imread('src/rawimage.jpg')
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
