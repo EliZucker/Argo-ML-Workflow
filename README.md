@@ -18,12 +18,7 @@ argo: v2.1.1
   Compiler: gc
   Platform: darwin/amd64
 ```
-
-
-
-
-
-
+<br/><br/>
 + Kubectl
 ```
 kubectl version
