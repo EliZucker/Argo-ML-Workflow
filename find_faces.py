@@ -5,7 +5,12 @@ import cv2 as cv
 import json
 import sys
 
+#####################
+# PRIMARY ALGORITHM #
+#####################
+
 #calibrate face box enlargement after detection
+#(the original face coverage is often too small to create a 3d model)
 TOP_SCALER = 0.56
 SIDES_SCALER = 0.33
 
@@ -14,13 +19,11 @@ image = face_recognition.load_image_file("/src/rawimage.jpg")
 
 # Find all the faces in the image using a pre-trained convolutional neural network.
 # This method is more accurate than the default HOG model, but it's slower
-# unless you have an nvidia GPU and dlib compiled with CUDA extensions. But if you do,
-# this will use GPU acceleration and perform well.
-# See also: find_faces_in_picture.py
 face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=0, model="cnn")
 
-print("I found {} face(s) in this photograph.".format(len(face_locations)))
+print("found {} face(s) in this photograph.".format(len(face_locations)))
 
+#these arrays facilitate the construction of imagemagick commands for cropping each face
 face_values_cnn = []
 crop_commands_cnn = [] 
 
@@ -38,17 +41,20 @@ for i in face_values_cnn:
     command = 'convert /data/rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" /tmp/cropped_face.jpg"
     crop_commands_cnn.append(command)
 
-#######################
-# ALTERNATIVE ALGORITHM
-#######################
+
+#########################
+# ALTERNATIVE ALGORITHM #
+#########################
 
 #calibrate face box enlargement after detection
 TOP_SCALER = 0.56
 SIDES_SCALER = 0.28
 
+#these arrays facilitate the construction of imagemagick commands for cropping each face
 face_values_cv = []
 crop_commands_cv = [] 
 
+#opencv standard face classifiers
 face_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/opencv_classifiers/haarcascade_frontalface_alt.xml')
 eye_cascade = cv.CascadeClassifier('root/facedetection/Argo-Workflow-Test/opencv_classifiers/haarcascade_eye.xml')
 
@@ -72,6 +78,8 @@ for i in face_values_cv:
     command = 'convert /data/rawimage.jpg -crop ' + str(i[2])+'x'+str(i[3])+'+'+str(i[0])+'+'+str(i[1])+" /tmp/cropped_face.jpg"
     crop_commands_cv.append(command)
 
+
+#dump the imagemagick commands corresponding to the algorithm that detected the most faces
 if len(face_values_cv)>len(face_values_cnn):
     with open('/src/imagemagick_commands.json', 'w') as outfile:
         json.dump([i for i in crop_commands_cv], outfile)
