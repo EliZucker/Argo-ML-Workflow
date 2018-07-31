@@ -18,16 +18,22 @@ argo: v2.1.1
   Compiler: gc
   Platform: darwin/amd64
 ```
-<br/><br/>
 + Kubectl
 ```
 kubectl version
 Client Version: version.Info{Major:"1", Minor:"11", GitVersion:"v1.11.0", GitCommit:"91e7b4fd31fcd3d5f436da26c980becec37ceefe", GitTreeState:"clean", BuildDate:"2018-06-27T22:29:25Z", GoVersion:"go1.10.3", Compiler:"gc", Platform:"darwin/amd64"}
 Server Version: version.Info{Major:"1", Minor:"10+", GitVersion:"v1.10.5-gke.3", GitCommit:"6265b9797fc8680c8395abeab12c1e3bad14069a", GitTreeState:"clean", BuildDate:"2018-07-19T23:02:51Z", GoVersion:"go1.9.3b4", Compiler:"gc", Platform:"linux/amd64"}
 ```
++ksonnet
+```
+ks version
+ksonnet version: 0.12.0-rc1
+jsonnet version: v0.10.0
+client-go version:
+```
 
-+ Kubeflow (requires ks)
-further instructions for deploying kubeflow [here](./KUBEFLOW.md)
++ Kubeflow<br/>
+Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)
 
 ### Deploy Our Project
 ```
