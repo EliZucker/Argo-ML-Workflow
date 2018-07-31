@@ -27,7 +27,7 @@ Server Version: version.Info{Major:"1", Minor:"10+", GitVersion:"v1.10.5-gke.3",
 ```
 
 + Kubeflow (reauires ks)
-further instructions for deploying kubeflow [here][KUBEFLOW.md]
+further instructions for deploying kubeflow [here](KUBEFLOW.md)
 
 ### Deploy Our Project
 ```
