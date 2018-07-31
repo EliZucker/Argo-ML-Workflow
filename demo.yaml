@@ -12,7 +12,7 @@ spec:
   - name: face-project
     inputs:
       parameters:
-      - name: img-url
+      - name: image-url
         default: "https://i.imgur.com/QUS0pCI.jpg"
       artifacts:
       - name: CODE
@@ -23,8 +23,8 @@ spec:
         template: download-image
         arguments:
           parameters:
-          - name: img-url
-            value: "{{inputs.parameters.img-url}}"
+          - name: image-url
+            value: "{{inputs.parameters.image-url}}"
       - name: APPLY-PVC
         template: apply-pvc
         
@@ -75,11 +75,11 @@ spec:
   - name: download-image
     inputs:
       parameters:
-      - name: img-url
+      - name: image-url
     container:
       image: sequenceiq/alpine-curl
       command: ["sh", "-c"]
-      args: ["curl {{inputs.parameters.img-url}} > /rawimage.jpg"]
+      args: ["curl {{inputs.parameters.image-url}} > /rawimage.jpg"]
     outputs:
       artifacts:
       - name: IMAGE
