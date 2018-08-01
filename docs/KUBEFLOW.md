@@ -50,8 +50,11 @@ Next enter the directory and open the $JOBNAME.jsonnet in your favorite text edi
 cd kubeflow_ks_app/components
 code $JOBENAME.jsonnet
 ```
+- {+ additions +}
+hello
+- [+ additions +]
+```
 
-```diff
 -local image = "gcr.io/kubeflow/tf-benchmarks-cpu:v20171202-bdab599-dirty-284af3";
 +-local image = "tensorflow/tensorflow:latest-gpu";
 ```
