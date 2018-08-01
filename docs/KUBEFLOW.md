@@ -71,13 +71,15 @@ code $JOBENAME.jsonnet
 -],
 +command: [sh, -c],
 +    args: ["
-+ ===your code here===
++ ===example code ===
++python deploy python
++======================
 +    "],
 
 - workingDir: "/opt/tf-benchmarks/scripts/tf_cnn_benchmarks",
 ```
 
-Depending on your knowledge of Tensorflow architecture you can deploy multiple master's workers and PS's if you are new to Tensorflow simply delete everything under PS
+Depending on your knowledge of Tensorflow architecture you can deploy multiple master's workers and PS's if you are new to Tensorflow simply delete everything under PS. If you want to learn more about TF architecture go to [this link](https://www.tensorflow.org/extend/architecture)
 
 ```diff
 - Ps: {
