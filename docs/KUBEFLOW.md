@@ -50,15 +50,64 @@ Next enter the directory and open the $JOBNAME.jsonnet in your favorite text edi
 cd kubeflow_ks_app/components
 code $JOBENAME.jsonnet
 ```
-- {+ additions +}
-hello
-- [+ additions +]
-```
 
+```diff
 -local image = "gcr.io/kubeflow/tf-benchmarks-cpu:v20171202-bdab599-dirty-284af3";
-+-local image = "tensorflow/tensorflow:latest-gpu";
+
++++ image can be replaced with any image running tensorflow
++local image = "tensorflow/tensorflow:latest-gpu";
+
+- args: [
+-    "python",
+-    "tf_cnn_benchmarks.py",
+-    "--batch_size=32",
+-    "--model=resnet50",
+-    "--variable_update=parameter_server",
+-    "--flush_stdout=true",
+-    "--num_gpus=1",
+-    "--local_parameter_device=cpu",
+-    "--device=cpu",
+-    "--data_format=NHWC",
+-],
++command: [sh, -c],
++    args: ["
++ ===your code here===
++    "],
+
+- workingDir: "/opt/tf-benchmarks/scripts/tf_cnn_benchmarks",
 ```
 
+Depending on your knowledge of Tensorflow architecture you can deploy multiple master's workers and PS's if you are new to Tensorflow simply delete everything under PS
+
+```diff
+- Ps: {
+-    template: {
+-        spec: {
+-        containers: [
+-            {
+-            args: [
+-                "python",
+-                "tf_cnn_benchmarks.py",
+-                "--batch_size=32",
+-                "--model=resnet50",
+-                "--variable_update=parameter_server",
+-                "--flush_stdout=true",
+-                "--num_gpus=1",
+-                "--local_parameter_device=cpu",
+-                "--device=cpu",
+-                "--data_format=NHWC",
+-            ],
+-            image: image,
+-            name: "tensorflow",
+-            workingDir: "/opt/tf-benchmarks/scripts/tf_cnn_benchmarks",
+-            },
+-        ],
+-        restartPolicy: "OnFailure",
+-        },
+-    },
+-    tfReplicaType: "PS",
+-},
+```
 + TFService
 
 TFServices are a Kubeflow deployment for running pretrained Tensorflow services.
