@@ -68,4 +68,4 @@ If you want to learn more about TF architecture go to [this link](https://www.te
 
 + TFService
 
-### As of August 2018 [Kubeflow.org](https://www.kubeflow.org/docs/guides/components/tfserving/) has updated their website with an actual guide for TF Services. Check it out here.
+##### As of August 2018 [Kubeflow.org](https://www.kubeflow.org/docs/guides/components/tfserving/) has updated their website with an actual guide for TF Services. Check it out here.
