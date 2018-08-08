@@ -33,88 +33,39 @@ rm -rf kubeflow_ks_app kubeflow_repo
 
 #### This part of the tutorial is simply documentation for creating your own tensorflow application since websites like [kubeflow.org](http://kubeflow.org/docs/started/getting-started) are often hard to follow or outdated as of June, 31, 2018.
 
+##### As of August 2018 Kubeflow has updated their website and it is much easier to follow: [tf.training](https://www.kubeflow.org/docs/guides/components/tftraining/)
+
 + TFJobs
 
-TFJobs are a Kubeflow custom resource for training tensorflow jobs on kubeflow
+TFJobs are a Kubeflow custom resource for distrubuted tensorflow jobs on kubeflow
 
 To create a TF Job:
 ```bash
 ks generate tf-job-simple $JOBNAME --name=$JOBNAME
 ```
 
-This will create a pre-built tf-job within a .jsonnet component inside of kubeflow_ks_app/components
+This will create a pre-built stencil for a tf-job (good for beginners) within a .jsonnet component inside of kubeflow_ks_app/components
 
-Next enter the directory and open the $JOBNAME.jsonnet in your favorite text editor
+Next enter the components directory and open the $JOBNAME.jsonnet in your favorite text editor
 
 ```bash
 cd kubeflow_ks_app/components
 code $JOBENAME.jsonnet
 ```
 
+Replace the image with a custom image.
 ```diff
 -local image = "gcr.io/kubeflow/tf-benchmarks-cpu:v20171202-bdab599-dirty-284af3";
 
 +++ image can be replaced with any image running tensorflow
 +local image = "tensorflow/tensorflow:latest-gpu";
-
-- args: [
--    "python",
--    "tf_cnn_benchmarks.py",
--    "--batch_size=32",
--    "--model=resnet50",
--    "--variable_update=parameter_server",
--    "--flush_stdout=true",
--    "--num_gpus=1",
--    "--local_parameter_device=cpu",
--    "--device=cpu",
--    "--data_format=NHWC",
--],
-+command: [sh, -c],
-+    args: ["
-+ ===example code ===
-+python deploy python
-+======================
-+    "],
-
-- workingDir: "/opt/tf-benchmarks/scripts/tf_cnn_benchmarks",
 ```
+And change the commands and arguments to run your python file instead
 
-Depending on your knowledge of Tensorflow architecture you can deploy multiple master's workers and PS's if you are new to Tensorflow simply delete everything under PS. If you want to learn more about TF architecture go to [this link](https://www.tensorflow.org/extend/architecture)
+Kubeflow is meant to utilize Tensorflows unique architecture of deploying a chief and multiple workers and PS's. If you simply want to run tensorflow without these custom resources it is possible by deploying only workers.
 
-```diff
-- Ps: {
--    template: {
--        spec: {
--        containers: [
--            {
--            args: [
--                "python",
--                "tf_cnn_benchmarks.py",
--                "--batch_size=32",
--                "--model=resnet50",
--                "--variable_update=parameter_server",
--                "--flush_stdout=true",
--                "--num_gpus=1",
--                "--local_parameter_device=cpu",
--                "--device=cpu",
--                "--data_format=NHWC",
--            ],
--            image: image,
--            name: "tensorflow",
--            workingDir: "/opt/tf-benchmarks/scripts/tf_cnn_benchmarks",
--            },
--        ],
--        restartPolicy: "OnFailure",
--        },
--    },
--    tfReplicaType: "PS",
--},
-```
+If you want to learn more about TF architecture go to [this link](https://www.tensorflow.org/extend/architecture).
+
 + TFService
 
-TFServices are a Kubeflow deployment for running pretrained Tensorflow services.
-
-To deploy a TF Service:
-```bash
-ks generate tf-serving-simple $JOBNAME --name=$JOBNAME
-```
+### As of August 2018 [Kubeflow.org](https://www.kubeflow.org/docs/guides/components/tfserving/) has updated their website with an actual guide for TF Services. Check it out here.
