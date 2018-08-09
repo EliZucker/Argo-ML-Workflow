@@ -22,7 +22,6 @@ spec:
       failureCondition: status.tfReplicaStatuses.Worker.failed > 0
       manifest: |
         apiVersion: kubeflow.org/v1alpha2
-        kind: TFJob
         metadata:
           ownerReferences:
           - apiVersion: argoproj.io/v1alpha1
@@ -46,16 +45,13 @@ spec:
                     apt-get install git -y &&
                     git clone https://github.com/alexmt/log-analyzer.git &&
                     cd log-analyzer/model &&
-                    pip install pipenv &&
-                    pipenv --python /usr/bin/python3 &&
-                    pipenv install &&
                     mkdir /tmp/logs &&
-                    pipenv run python ./train.py --input-path sample-data/logs.txt --model-dir-path /tmp/logs/model
+                    python3 ./train.py --input-path sample-data/logs.txt --model-dir-path /tmp/logs/model
                     "
                     command:
                     - /bin/sh
                     - -c
-                    image: tensorflow/tensorflow:latest-gpu
+                    image: tensorflow/tensorflow:latest-gpu-py3
                     name: tensorflow
                     resources:
                       limits:
