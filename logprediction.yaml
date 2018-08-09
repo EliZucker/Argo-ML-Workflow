@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: log-analyzer-workflow-
+spec:
+  entrypoint: log-analyzer
+  templates:
+  - name: log-analyzer
+    # inputs:
+    #   artifacts:
+    #   - name: CODE
+    #     git: 
+    #       repo: https://github.com/alexmt/log-analyzer.git
+    steps:
+    - - name: TFJOB
+        template: tfjob
+
+  - name: tfjob
+    resource:
+      action: create
+      successCondition: status.tfReplicaStatuses.Worker.succeeded > 0
+      failureCondition: status.tfReplicaStatuses.Worker.failed > 0
+      manifest: |
+        apiVersion: kubeflow.org/v1alpha2
+        kind: TFJob
+        metadata:
+          ownerReferences:
+          - apiVersion: argoproj.io/v1alpha1
+            blockOwnerDeletion: true
+            kind: Workflow
+            name: "{{workflow.name}}"
+            uid: "{{workflow.uid}}"
+          labels:
+            ksonnet.io/component: log-analyzer
+          generateName: log-analyzer-
+          namespace: default
+        spec:
+          tfReplicaSpecs:
+            Worker:
+              replicas: 1
+              template:
+                spec:
+                  containers:
+                  - args:
+                    - "apt-get update &&
+                    apt-get install git -y &&
+                    git clone https://github.com/alexmt/log-analyzer.git &&
+                    cd log-analyzer/model &&
+                    pip install pipenv &&
+                    pipenv --python /usr/bin/python3 &&
+                    pipenv install &&
+                    mkdir /tmp/logs &&
+                    pipenv run python ./train.py --input-path sample-data/logs.txt --model-dir-path /tmp/logs/model
+                    "
+                    command:
+                    - /bin/sh
+                    - -c
+                    image: tensorflow/tensorflow:latest-gpu
+                    name: tensorflow
+                    resources:
+                      limits:
+                        nvidia.com/gpu: "1"
+                  restartPolicy: OnFailure
+                  
