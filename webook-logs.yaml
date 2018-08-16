@@ -28,100 +28,44 @@ spec:
               apiVersion: argoproj.io/v1alpha1
               kind: Workflow
               metadata:
-                generateName: eli-edan-argo-workflow-
+                generateName: log-analyzer-workflow-
               spec:
-                entrypoint: face-project
+                entrypoint: log-analyzer
                 arguments:
                   parameters:
-                  - name: message
-                    # this is the value that should be overridden
-                    value: hello world
+                  - name: webhook
+                    value: overriddenvalue
                 volumes:
                 - name: workdir
                   persistentVolumeClaim:
-                    claimName: face-processing-demo-pvc
+                    claimName: log-analyzer-pvc
                 templates:
-                - name: face-project
+                - name: log-analyzer
                   inputs:
                     parameters:
-                    - name: image-url
-                      default: "https://i.imgur.com/QUS0pCI.jpg"
-                    - name: message
-                      value: "{{arguments.parameters.message}}"
+                    - name: webhook
+                      value: "{{arguments.parameters.webhook}}"
                     artifacts:
                     - name: CODE
                       git: 
                         repo: https://github.com/EliZucker/Argo-Workflow-Test.git
-                  steps:
-                  - - name: DOWNLOAD-IMAGE
-                      template: download-image
-                      arguments:
-                        parameters: 
-                        - name: message
-                          value: "{{inputs.parameters.message}}"
-                        - name: image-url
-                          value: "{{inputs.parameters.image-url}}"
+                  dag:
+                    tasks:
                     - name: APPLY-PVC
                       template: apply-pvc
-                      
-                  - - name: LOCATE-FACES
-                      template: locate-faces
+                    - name: WEBHOOK
+                      template: redeploy-webhook
                       arguments:
                         artifacts:
-                        - name: RAW-IMAGE
-                          from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
-                    
-                    - name: GENERATE-TOKEN
-                      template: generate-token
-                  
-                  - - name: HANDLE-INDIVIDUAL-FACES
-                      template: handle-individual-faces
-                      arguments:
-                        artifacts:
-                        - name: RAW-IMAGE
-                          from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
                         - name: CODE
                           from: "{{inputs.artifacts.CODE}}"
-                        parameters:
-                        - name: TOKEN
-                          value: "{{steps.GENERATE-TOKEN.outputs.result}}"
-                        - name: imagemagick-command
-                          value: "{{item}}"
-                      withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
-
-                  - - name: TFJOB
+                    - name: TFJOB
                       template: tfjob
-                      when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"
+                      dependencies: [APPLY-PVC, WEBHOOK]
+                    - name: OutputTFJOB
+                      template: output
+                      dependencies: [TFJOB]
 
-                  - - name: TF-RESULT-TO-ARTIFACT
-                      template: tf-result-to-artifact
-                      when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"   
-                      arguments:
-                        parameters:
-                        - name: TOKEN
-                          value: "{{steps.GENERATE-TOKEN.outputs.result}}"
-                        artifacts:
-                        - name: "CODE"
-                          from: "{{inputs.artifacts.CODE}}"
-
-                    - name: No-FACES-FOUND
-                      template: noimage
-                      when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == []"
-
-                - name: download-image
-                  inputs:
-                    parameters:
-                    - name: image-url
-                    - name: message
-                  container:
-                    image: sequenceiq/alpine-curl
-                    command: ["sh", "-c"]
-                    args: ["curl {{inputs.parameters.image-url}} > /rawimage.jpg && echo {{inputs.parameters.message}}"]
-                  outputs:
-                    artifacts:
-                    - name: IMAGE
-                      path: /rawimage.jpg
-                
                 - name: apply-pvc
                   resource:
                     action: apply
@@ -129,164 +73,41 @@ spec:
                       kind: PersistentVolumeClaim
                       apiVersion: v1
                       metadata:
-                        name: face-processing-demo-pvc
+                        name: log-analyzer-pvc
                       spec:
                         accessModes: [ "ReadWriteOnce" ]
                         resources:
                           requests:
                             storage: 1Gi
-                        
-                - name: generate-token
-                  script:
-                    image: debian:stable-slim
+
+                - name: redeploy-webhook
+                  inputs:
+                    artifacts:
+                    - name: CODE
+                      path: /root/
+                  container:
+                    image: lachlanevenson/k8s-kubectl
                     command: [sh, -c]
                     args: ["
-                    RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6)
-                    && while [ -d '/mnt/vol/input-${RAND}' ]; 
-                    do RAND=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 6);
-                    done;
-                    rm -rf /mnt/vol/outputdir-${RAND};
-                    echo $RAND
+                      POD=$(kubectl get pod -l app=webhook -o jsonpath='{.items[0].metadata.name}') &&
+                      kubectl delete sensor webhook-threedee &&
+                      kubectl delete pod $POD &&
+                      kubectl create -f /root/webook-logs.yaml
+                    
                     "]
+
+                - name: output
+                  container:
                     volumeMounts: 
                     - name: workdir
                       mountPath: /mnt/vol
-
-                - name: locate-faces
-                  inputs:
-                    artifacts:
-                    - name: RAW-IMAGE
-                      path: /src/rawimage.jpg
-                  container:
-                    image: gcr.io/argo-edan/newfacedetect
-                    command: ["bash", "-c"]
-                    args: ["cd /root/facedetection &&
-                    git clone https://github.com/EliZucker/Argo-Workflow-Test.git &&
-                    mv /root/facedetection/Argo-Workflow-Test/find_faces.py /root/facedetection &&
-                    cd - &&
-                    python /root/facedetection/find_faces.py"]
-                  outputs:
-                    parameters:
-                    - name: imagemagick-commands
-                      valueFrom:
-                        path: /src/imagemagick_commands.json
-
-                - name: handle-individual-faces
-                  inputs:
-                    parameters:
-                    - name: imagemagick-command
-                    - name: TOKEN
-                    artifacts:
-                    - name: RAW-IMAGE
-                    - name: CODE
-                  steps:
-                  - - name: CROP-FACE
-                      template: crop-face
-                      arguments:
-                        artifacts:
-                        - name: RAW-IMAGE
-                          from: "{{inputs.artifacts.RAW-IMAGE}}"
-                        parameters:
-                        - name: imagemagick-command
-                          value: "{{inputs.parameters.imagemagick-command}}"
-                  # - - name: CHECK-FACE-MATCH
-                  #     template: check-face-match
-                  #     arguments:
-                  #       artifacts:
-                  #         - name: CROPPED-FACE
-                  #           from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
-                  #         - name: CODE
-                  #           from: "{{inputs.artifacts.CODE}}"
-                  - - name: VOLUMIZE-RESULT
-                      template: volumize-result
-                      arguments:
-                        parameters:
-                          - name: TOKEN
-                            value: "{{inputs.parameters.TOKEN}}"
-                        artifacts:
-                          - name: CODE
-                            from: "{{inputs.artifacts.CODE}}"
-                          - name: CROPPED-FACE
-                            from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
-                            
-
-                  # Placeholder step that only runs if the cropped face doesn't match with a supplied image
-                  # - - name: PLACEHOLDER-STEP
-                  #     template: placeholder-step
-                  #     when: "{{steps.CHECK-FACE-MATCH.outputs.result}} == unrecognized-face"
-                  
-
-
-                - name: crop-face
-                  inputs:
-                    artifacts:
-                    - name: RAW-IMAGE
-                      path: /data/rawimage.jpg
-                    parameters:
-                    - name: imagemagick-command
-                  container:
-                    image: acleancoder/imagemagick-full
-                    command: ["bash", "-c"]
-                    args: ["{{inputs.parameters.imagemagick-command}}"]
+                    image: alpine:latest
                   outputs:
                     artifacts:
-                    - name: CROPPED-FACE
-                      path: /tmp/cropped_face.jpg
+                    - name: training-logs
+                      path: /mnt/vol/model
+
                 
-                # - name: check-face-match
-                #   inputs:
-                #     artifacts:
-                #     - name: CROPPED-FACE
-                #       path: /tmp/photo.jpg
-                #     - name: CODE
-                #       path: /src
-                #   script:
-                #     image: gcr.io/argo-edan/facerec
-                #     command: [python,  /src/facereference.py]
-
-                # - name: placeholder-step
-                #   container:
-                #     image: gcr.io/argo-edan/facerec
-                #     command: [python,  /src/facereference.py]
-
-                - name: volumize-result
-                  inputs:
-                    parameters:
-                    - name: TOKEN
-                    artifacts:
-                    - name: CROPPED-FACE
-                      path: /tmp/photo.jpg
-                    - name: CODE
-                      path: /src
-                  container:
-                    image: debian:stable-slim
-                    command: [sh, -c]
-                    args: ["mkdir -p /mnt/vol/input-{{inputs.parameters.TOKEN}}/; mkdir -p /mnt/vol/outputdir-{{inputs.parameters.TOKEN}}/; cp --backup=numbered /tmp/photo.jpg /mnt/vol/input-{{inputs.parameters.TOKEN}}/face"]
-                    volumeMounts: 
-                    - name: workdir
-                      mountPath: /mnt/vol
-
-                - name: tf-result-to-artifact
-                  inputs:
-                    parameters:
-                      - name: TOKEN
-                    artifacts:
-                    - name: CODE
-                      path: /src
-                  container:
-                    image: debian:stable-slim
-                    command: [sh, -c]
-                    args: ["
-                      mv /mnt/vol/outputdir-{{inputs.parameters.TOKEN}} /tmp/
-                    "]
-                    volumeMounts: 
-                    - name: workdir
-                      mountPath: /mnt/vol
-                  outputs:
-                    artifacts:
-                    - name: 3D-FACES
-                      path: /tmp/outputdir-{{inputs.parameters.TOKEN}}
-
                 - name: tfjob
                   resource:
                     action: create
@@ -303,8 +124,8 @@ spec:
                           name: "{{workflow.name}}"
                           uid: "{{workflow.uid}}"
                         labels:
-                          ksonnet.io/component: dockerpnet
-                        generateName: dockerpnet-
+                          ksonnet.io/component: log-analyzer
+                        generateName: log-analyzer-
                         namespace: default
                       spec:
                         tfReplicaSpecs:
@@ -315,15 +136,23 @@ spec:
                                 volumes:
                                 - name: workdir
                                   persistentVolumeClaim:
-                                    claimName: face-processing-demo-pvc
+                                    claimName: log-analyzer-pvc
                                 containers:
-                                - args:
-                                  - "curl https://raw.githubusercontent.com/EliZucker/Argo-Workflow-Test/master/deploy.sh
-                                    | bash"
+                                - args: ["
+                                  apt-get update &&
+                                  apt-get install git -y &&
+                                  wget https://dl.minio.io/server/minio/release/linux-amd64/minio &&
+                                  chmod +x minio &&
+                                  ./minio server /data &&
+                                  mcc
+                                  git clone https://github.com/alexmt/log-analyzer.git &&
+                                  cd log-analyzer/model &&
+                                  python3 ./train.py --input-path sample-data/logs.txt --model-dir-path /mnt/vol/model
+                                  "]
                                   command:
                                   - /bin/sh
                                   - -c
-                                  image: gcr.io/argo-edan/tensfordlib
+                                  image: tensorflow/tensorflow:latest-gpu-py3
                                   name: tensorflow
                                   volumeMounts: 
                                   - name: workdir
@@ -332,11 +161,7 @@ spec:
                                     limits:
                                       nvidia.com/gpu: "1"
                                 restartPolicy: OnFailure
-
-                - name: noimage
-                  script:
-                    image: debian:stable-slim
-                    command: [sh, -c]
-                    args: ["echo no faces detected"]
-                    
                                 
+
+                                  
+                                              

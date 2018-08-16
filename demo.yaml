@@ -19,12 +19,14 @@ spec:
         git: 
           repo: https://github.com/EliZucker/Argo-Workflow-Test.git
     steps:
+    # Downloads image from online URL
     - - name: DOWNLOAD-IMAGE
         template: download-image
         arguments:
           parameters:
           - name: image-url
             value: "{{inputs.parameters.image-url}}"
+    # applys a Presistant volume claim
       - name: APPLY-PVC
         template: apply-pvc
         
