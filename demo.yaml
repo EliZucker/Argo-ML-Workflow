@@ -6,6 +6,7 @@ spec:
   entrypoint: face-project
   volumes:
   - name: workdir
+    #we use a PVC to transfer artifacts to a custom resource
     persistentVolumeClaim:
       claimName: face-processing-demo-pvc
   templates:
@@ -13,33 +14,33 @@ spec:
     inputs:
       parameters:
       - name: image-url
-        default: "https://i.imgur.com/QUS0pCI.jpg"
+        default: "https://i.imgur.com/QUS0pCI.jpg" # some stock image from the internet
       artifacts:
       - name: CODE
         git: 
           repo: https://github.com/EliZucker/Argo-Workflow-Test.git
     steps:
-    # Downloads image from online URL
+    #download image from online URL
     - - name: DOWNLOAD-IMAGE
         template: download-image
         arguments:
           parameters:
           - name: image-url
             value: "{{inputs.parameters.image-url}}"
-    # applys a Presistant volume claim
+    #applys a persistent volume claim (used later in the 2d->3d step)
       - name: APPLY-PVC
         template: apply-pvc
-        
+    #find dimensions/location of each face
     - - name: LOCATE-FACES
         template: locate-faces
         arguments:
           artifacts:
           - name: RAW-IMAGE
             from: "{{steps.DOWNLOAD-IMAGE.outputs.artifacts.IMAGE}}"
-      
+    #generate unique token (used to identify original input in tfjob)
       - name: GENERATE-TOKEN
         template: generate-token
-    
+    #template encapsulates the steps for each individual face 
     - - name: HANDLE-INDIVIDUAL-FACES
         template: handle-individual-faces
         arguments:
@@ -51,14 +52,16 @@ spec:
           parameters:
           - name: TOKEN
             value: "{{steps.GENERATE-TOKEN.outputs.result}}"
+          #diverge paths based on the imagemagick commands returned from locate-faces
           - name: imagemagick-command
             value: "{{item}}"
         withParam: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}}"
-
+    #after individual face processing, convert all of the 2d faces to 3d
     - - name: TFJOB
         template: tfjob
+        #only run when 1 or more faces are detected
         when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"
-
+    #insert 3d face models back into the workflow (PVC->Artifact)
     - - name: TF-RESULT-TO-ARTIFACT
         template: tf-result-to-artifact
         when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} != []"   
@@ -69,11 +72,12 @@ spec:
           artifacts:
           - name: "CODE"
             from: "{{inputs.artifacts.CODE}}"
-
+    #conditional step for if no face is found
       - name: No-FACES-FOUND
         template: noimage
         when: "{{steps.LOCATE-FACES.outputs.parameters.imagemagick-commands}} == []"
 
+  #convert direct image URL to artifact
   - name: download-image
     inputs:
       parameters:
@@ -87,6 +91,7 @@ spec:
       - name: IMAGE
         path: /rawimage.jpg
   
+  #initiate pvc
   - name: apply-pvc
     resource:
       action: apply
@@ -100,7 +105,8 @@ spec:
           resources:
             requests:
               storage: 1Gi
-          
+
+  #generate token (used to differentiate each workflow's group of 2D faces)
   - name: generate-token
     script:
       image: debian:stable-slim
@@ -117,6 +123,7 @@ spec:
       - name: workdir
         mountPath: /mnt/vol
 
+  #runs 2 face detection algs and uses results with the most faces
   - name: locate-faces
     inputs:
       artifacts:
@@ -136,6 +143,7 @@ spec:
         valueFrom:
           path: /src/imagemagick_commands.json
 
+  #substeps for each face
   - name: handle-individual-faces
     inputs:
       parameters:
@@ -154,6 +162,7 @@ spec:
           parameters:
           - name: imagemagick-command
             value: "{{inputs.parameters.imagemagick-command}}"
+    # This is an example conditional step we never ended up using
     # - - name: CHECK-FACE-MATCH
     #     template: check-face-match
     #     arguments:
@@ -162,6 +171,8 @@ spec:
     #           from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
     #         - name: CODE
     #           from: "{{inputs.artifacts.CODE}}"
+    
+    #place cropped face in volume
     - - name: VOLUMIZE-RESULT
         template: volumize-result
         arguments:
@@ -173,15 +184,8 @@ spec:
               from: "{{inputs.artifacts.CODE}}"
             - name: CROPPED-FACE
               from: "{{steps.CROP-FACE.outputs.artifacts.CROPPED-FACE}}"
-              
 
-    # Placeholder step that only runs if the cropped face doesn't match with a supplied image
-    # - - name: PLACEHOLDER-STEP
-    #     template: placeholder-step
-    #     when: "{{steps.CHECK-FACE-MATCH.outputs.result}} == unrecognized-face"
-    
-
-
+  #run the supplied imagemagick commands to crop the face
   - name: crop-face
     inputs:
       artifacts:
@@ -198,6 +202,7 @@ spec:
       - name: CROPPED-FACE
         path: /tmp/cropped_face.jpg
    
+  # No idea if this would work, it was that conditional step being developed
   # - name: check-face-match
   #   inputs:
   #     artifacts:
@@ -208,12 +213,12 @@ spec:
   #   script:
   #     image: gcr.io/argo-edan/facerec
   #     command: [python,  /src/facereference.py]
-
   # - name: placeholder-step
   #   container:
   #     image: gcr.io/argo-edan/facerec
   #     command: [python,  /src/facereference.py]
 
+  #take CROPPED-FACE and put it workdir
   - name: volumize-result
     inputs:
       parameters:
@@ -231,27 +236,7 @@ spec:
       - name: workdir
         mountPath: /mnt/vol
 
-  - name: tf-result-to-artifact
-    inputs:
-      parameters:
-        - name: TOKEN
-      artifacts:
-      - name: CODE
-        path: /src
-    container:
-      image: debian:stable-slim
-      command: [sh, -c]
-      args: ["
-        mv /mnt/vol/outputdir-{{inputs.parameters.TOKEN}} /tmp/
-      "]
-      volumeMounts: 
-      - name: workdir
-        mountPath: /mnt/vol
-    outputs:
-      artifacts:
-      - name: 3D-FACES
-        path: /tmp/outputdir-{{inputs.parameters.TOKEN}}
-
+  #custom resource that uses tensorflow model to convert 2D->3D face
   - name: tfjob
     resource:
       action: create
@@ -297,7 +282,30 @@ spec:
                       limits:
                         nvidia.com/gpu: "1"
                   restartPolicy: OnFailure
+                  
+  #turn the resulting 3d face files back into an artifact
+  - name: tf-result-to-artifact
+    inputs:
+      parameters:
+        - name: TOKEN
+      artifacts:
+      - name: CODE
+        path: /src
+    container:
+      image: debian:stable-slim
+      command: [sh, -c]
+      args: ["
+        mv /mnt/vol/outputdir-{{inputs.parameters.TOKEN}} /tmp/
+      "]
+      volumeMounts: 
+      - name: workdir
+        mountPath: /mnt/vol
+    outputs:
+      artifacts:
+      - name: 3D-FACES
+        path: /tmp/outputdir-{{inputs.parameters.TOKEN}}
 
+  #case for if no face is detected
   - name: noimage
     script:
       image: debian:stable-slim
