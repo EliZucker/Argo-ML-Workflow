@@ -34,7 +34,11 @@ client-go version:
 
 + Kubeflow
 
-Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)
+*Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)*
+
++ Custom images
+
+###### This project uses some custom images in the workflow. The face recognition project can be found [here](https://github.com/EliZucker/face_recognition).
 
 ### Deploy Our Project
 ```
@@ -49,4 +53,4 @@ argo submit demo.yaml -p img-url="yourimagehere.jpg"
 
 ## Acknowledgments
 Special thanks to:
-+ [Jesse Suen](http://github.com/) for countlessly help along the way
++ [Jesse Suen](http://github.com/jessesuen) and [Alexander Matyushentsev](http://github.com/alexmt) for countless help along the way
