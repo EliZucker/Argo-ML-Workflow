@@ -1,14 +1,22 @@
 git clone https://github.com/YadiraF/PRNet
 cd PRNet/Data/net-data
+
+#configer minio client, REQUIRES preimported .data-00000-of-00001 file
 export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 mc config host add bucketport http://argo-artifacts-minio.default:9000 $AWS_ACCESS_KEY $AWS_SECRET_KEY
 mc cp bucketport/3dfacebucket/256_256_resfcn256_weight.data-00000-of-00001 256_256_resfcn256_weight.data-00000-of-00001
+
 cd ..
 cd ..
 mkdir inputdir
 mkdir outputdir
-#big mess of bash code for checking which inputs exist and if their output is empty
+#big mess of bash code for checking which inputfolders exist and if their output is empty
+#if output empty then run PRNET on input
+#this code allows multiple people to run the workflow together
+
+#BUG: If you delete the workflow before this finishes executing PRNET will still be executed on the previous
+#input as well, slowing down the TFJOB
 ls /mnt/vol/
 for directory in /mnt/vol/input-*;
 do
