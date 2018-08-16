@@ -32,8 +32,10 @@ do
             cd inputdir
             for file in *; do mv "$file" "${file}".jpg; done
             cd ..
-            # python run_basics.py
+            # CPU Intensive line
+            #####################################################
             python demo.py -i inputdir -o outputdir --isDlib True
+            #####################################################
             mv outputdir/* /mnt/vol/outputdir-$TOKEN
             else echo INPUT FOLDER DOES NOT EXIST
         fi
