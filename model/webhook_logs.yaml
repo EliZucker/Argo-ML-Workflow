@@ -140,7 +140,7 @@ spec:
                                 containers:
                                 - args: ["
                                   apt-get update &&
-                                  apt-get install git -y &&
+                                  apt-get install git wget -y &&
                                   wget https://dl.minio.io/server/minio/release/linux-amd64/minio &&
                                   chmod +x minio &&
                                   ./minio server /data &&
