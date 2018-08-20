@@ -92,7 +92,7 @@ spec:
                       POD=$(kubectl get pod -l app=webhook -o jsonpath='{.items[0].metadata.name}') &&
                       kubectl delete sensor webhook-threedee &&
                       kubectl delete pod $POD &&
-                      kubectl create -f /root/webook-logs.yaml
+                      kubectl create -f /root/model/webook_logs.yaml
                     
                     "]
 
