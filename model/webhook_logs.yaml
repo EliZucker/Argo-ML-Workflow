@@ -144,7 +144,6 @@ spec:
                                   wget https://dl.minio.io/server/minio/release/linux-amd64/minio &&
                                   chmod +x minio &&
                                   ./minio server /data &&
-                                  mcc
                                   git clone https://github.com/alexmt/log-analyzer.git &&
                                   cd log-analyzer/model &&
                                   python3 ./train.py --input-path sample-data/logs.txt --model-dir-path /mnt/vol/model
