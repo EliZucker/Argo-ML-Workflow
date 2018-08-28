@@ -185,5 +185,5 @@ The float_val should be changed depending on the output of your model. Otherwise
 Note: the above code can be put into a loop and run multiple time. This is especially useful in cases like an LSTM where your data is constantly updated.
 
 ## Helpful resources:
-[How to deploy TensorFlow models to production using TF Serving - Thalles Silva](https://medium.freecodecamp.org/how-to-deploy-tensorflow-models-to-production-using-tf-serving-4b4b78d41700)
-[Kubeflow TF-serving tutorial](https://www.kubeflow.org/docs/guides/components/tfserving/)
++ [How to deploy TensorFlow models to production using TF Serving - Thalles Silva](https://medium.freecodecamp.org/how-to-deploy-tensorflow-models-to-production-using-tf-serving-4b4b78d41700)
++ [Kubeflow TF-serving tutorial](https://www.kubeflow.org/docs/guides/components/tfserving/)
