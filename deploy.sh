@@ -1,12 +1,12 @@
-curl https://sdk.cloud.google.com | bash
-exec -l $SHELL
-gcloud init
+export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update && sudo apt-get install google-cloud-sdk
 
 git clone https://github.com/YadiraF/PRNet
 cd PRNet
 
-
-gsutil cp gs://argo-ml-demo/0/256_256_resfcn256_weight.data-00000-of-00001 ./Data/net-data
+gsutil cp gs://argo-ml-demo/0/256_256_resfcn256_weight.data-00000-of-00001 ./Data/net-data/256_256_resfcn256_weight.data-00000-of-00001
 
 mkdir inputdir
 mkdir outputdir
