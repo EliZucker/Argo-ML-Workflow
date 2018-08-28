@@ -36,14 +36,25 @@ client-go version:
 
 *Instructions for deploying kubeflow can be found [here](docs/KUBEFLOW.md)*
 
-+ Custom images
++ Kubernetes Cluster w/ NVIDIA GPU's enabled
 
-###### This project uses some custom images in the workflow. The face recognition project can be found [here](https://github.com/EliZucker/face_recognition).
+For GKE users, GPU deployment can be found [here](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus) 
+
+For other users, make sure you have the NVIDIA driver set up in your cluster. The following command will install a Daemeonset with the driver which is needed in order to utilize the `limits: nvidia.com/gpu: 1` line in the yaml.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/stable/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+```
+
+### Custom images
+
+##### This project uses some custom docker images in the workflow. The face recognition project can be found [here](https://github.com/EliZucker/face_recognition)
 
 ### Deploy Our Project
-```
+```bash
 git clone https://github.com/EliZucker/Argo-Workflow-Test
 cd Argo-Workflow-Test
+# image must be publicly available on the internet
 argo submit demo.yaml -p img-url="yourimagehere.jpg"
 ```
 
