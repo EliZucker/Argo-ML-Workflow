@@ -55,7 +55,7 @@ kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container
 git clone https://github.com/EliZucker/Argo-Workflow-Test
 cd Argo-Workflow-Test
 # image must be publicly available on the internet
-argo submit demo.yaml -p img-url="yourimagehere.jpg"
+argo submit demo.yaml -p image-url="yourimagehere.jpg"
 ```
 
 ## Authors
